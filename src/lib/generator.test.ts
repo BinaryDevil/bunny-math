@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { correctAnswer, generateQuiz, makeChoices, makeFact, regroups } from './generator';
+import { correctAnswer, generateQuiz, LEVELS, makeChoices, makeFact, nextLevel, regroupCount, regroups } from './generator';
 import { makeRng } from './rng';
-import type { LevelId } from './types';
+import type { LevelId, Op } from './types';
 
 const SEEDS = Array.from({ length: 300 }, (_, i) => i * 7919 + 1);
 
-function facts(level: LevelId) {
+const ALL_LEVELS = LEVELS.map((l) => l.id);
+
+function facts(level: LevelId, ops: Op[] = ['+', '-']) {
   return SEEDS.flatMap((seed) => {
     const r = makeRng(seed);
-    return [makeFact(r, level, '+'), makeFact(r, level, '-')];
+    return ops.map((op) => makeFact(r, level, op));
   });
 }
 
@@ -57,6 +59,79 @@ describe('sums stay at the right difficulty', () => {
   });
 });
 
+describe('bigger numbers, times and divide', () => {
+  it('every level: whole, positive answers below 1000 that add up', () => {
+    for (const level of ALL_LEVELS) {
+      for (const f of facts(level, ['+', '-', '×', '÷'])) {
+        const want = { '+': f.a + f.b, '-': f.a - f.b, '×': f.a * f.b, '÷': f.a / f.b }[f.op];
+        expect(f.c).toBe(want);
+        expect(Number.isInteger(f.c)).toBe(true);
+        expect(f.c).toBeGreaterThanOrEqual(1);
+        expect(f.c).toBeLessThanOrEqual(999);
+        expect(f.b).toBeGreaterThanOrEqual(2);
+      }
+    }
+  });
+
+  it('add & take-away levels never times or divide', () => {
+    for (const level of [1, 2, 3, 4, 5, 6] as const) {
+      for (const f of facts(level, ['×', '÷'])) expect(['+', '-']).toContain(f.op);
+    }
+  });
+
+  it('level 5 is 3-digit with at most one carry or borrow', () => {
+    for (const f of facts(5)) {
+      expect(f.a).toBeGreaterThanOrEqual(100);
+      expect(regroupCount(f)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('level 6 is 3-digit with two or more carries or borrows, sometimes across a zero', () => {
+    const all = facts(6);
+    for (const f of all) {
+      expect(f.a).toBeGreaterThanOrEqual(100);
+      expect(regroupCount(f)).toBeGreaterThanOrEqual(2);
+    }
+    expect(all.some((f) => f.op === '-' && Math.floor(f.a / 10) % 10 === 0)).toBe(true);
+  });
+
+  it('first tables use 2, 5 and 10; all tables stay within 10 × 10', () => {
+    for (const f of facts(11, ['×', '÷'])) {
+      if (f.op === '×') expect([f.a, f.b].some((n) => [2, 5, 10].includes(n))).toBe(true);
+      else expect([2, 5, 10]).toContain(f.b);
+    }
+    for (const f of facts(13, ['×', '÷'])) {
+      const [x, y] = f.op === '×' ? [f.a, f.b] : [f.b, f.c];
+      expect(Math.max(x, y)).toBeLessThanOrEqual(10);
+      expect(Math.min(x, y)).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('big times is two-digit by one-digit', () => {
+    for (const f of facts(14, ['×', '÷'])) {
+      if (f.op === '×') expect([Math.max(f.a, f.b) >= 10, Math.min(f.a, f.b) < 10]).toEqual([true, true]);
+      else {
+        expect(f.a).toBeLessThan(100);
+        expect(f.b).toBeLessThan(10);
+        expect(f.c).toBeGreaterThanOrEqual(11);
+      }
+    }
+  });
+
+  it('"all four" quizzes are two thirds times and divide', () => {
+    const quiz = generateQuiz({ level: 12, count: 18, seed: 4 });
+    expect(quiz.filter((q) => q.fact.op === '×' || q.fact.op === '÷')).toHaveLength(12);
+    expect(new Set(quiz.map((q) => q.fact.op)).size).toBe(4);
+  });
+
+  it('the next level stays in the same mode', () => {
+    expect(nextLevel(4)).toBe(5);
+    expect(nextLevel(6)).toBe(null);
+    expect(nextLevel(13)).toBe(14);
+    expect(nextLevel(14)).toBe(null);
+  });
+});
+
 describe('quizzes', () => {
   it('have the asked length, no repeated sums, and start with plain sums', () => {
     for (const seed of SEEDS.slice(0, 50)) {
@@ -98,10 +173,10 @@ describe('quizzes', () => {
 
 describe('answers', () => {
   it('multiple choice has 4 different positive options including the answer', () => {
-    for (const level of [1, 2, 3, 4] as const) {
+    for (const level of ALL_LEVELS) {
       SEEDS.forEach((seed, i) => {
         const r = makeRng(seed);
-        const f = makeFact(r, level, i % 2 ? '+' : '-');
+        const f = makeFact(r, level, (['+', '-', '×', '÷'] as const)[i % 4]);
         const choices = makeChoices(r, f);
         expect(choices).toHaveLength(4);
         expect(new Set(choices).size).toBe(4);

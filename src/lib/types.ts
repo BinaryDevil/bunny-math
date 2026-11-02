@@ -1,14 +1,18 @@
-export type Op = '+' | '-';
+export type Op = '+' | '-' | '×' | '÷';
 
-export type LevelId = 1 | 2 | 3 | 4;
+/** Which operations the child practices: adding and taking away, or all four. */
+export type Mode = 'plus' | 'all';
+
+/** Levels 1–6 are in the "plus" mode, 11–14 in the "all four" mode. */
+export type LevelId = 1 | 2 | 3 | 4 | 5 | 6 | 11 | 12 | 13 | 14;
 
 /** What a question practices. Used for the "how you did" summary. */
-export type Skill = 'add20' | 'sub20' | 'add' | 'sub' | 'carry' | 'borrow';
+export type Skill = 'add20' | 'sub20' | 'add' | 'sub' | 'carry' | 'borrow' | 'times' | 'divide';
 
 /** The underlying sum, e.g. 38 + 7 = 45. */
 export type Fact = { a: number; op: Op; b: number; c: number };
 
-export type Story = { emoji: string; text: string };
+export type Story = { emoji: string; text: string; ask: string };
 
 export type Question = {
   id: string;

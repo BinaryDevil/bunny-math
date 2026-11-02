@@ -1,11 +1,15 @@
 # Bunny Math 🐰
 
-Cute adding and taking-away practice for kids around 8. It runs entirely in the browser: no accounts, no server, and progress is saved on the device.
+Cute maths practice for kids around 8: adding and taking away, or all four operations. It runs entirely in the browser: no accounts, no server, and progress is saved on the device.
 
-- 4 levels: within 20, no carrying, carrying/borrowing, and two-digit sums (answers up to 99)
+- Two modes, picked on the first visit and switchable from the home screen:
+  - **Add & take away**, 6 levels: within 20, no carrying, carrying/borrowing, two-digit sums, three-digit sums, and three-digit sums with lots of carrying (including borrowing across a zero)
+  - **All four**, 4 levels: tables of 2, 5 and 10; tables up to 5; tables up to 10; two-digit × and ÷ by one digit. Two thirds of the questions are × or ÷.
 - 5 question types: type the answer, pick the answer, missing number, compare (< = >), picture stories
 - Fresh questions every time; `?seed=123` in the URL gives the same quiz again
-- "Show me how" explains each question step by step with tens-and-ones blocks
+- "Show me how" explains each question step by step, in one of two styles (the choice is remembered):
+  - **Blocks**: hundreds, tens and ones blocks, and dot arrays for × and ÷
+  - **Columns**: the written column method (竖式), one column at a time, with carried digits, borrow dots, and long division
 - Missed questions come back at the end; results show stars, skills, and a sticker reward
 - Printable worksheets with an answer key (🖨️ on the home screen)
 

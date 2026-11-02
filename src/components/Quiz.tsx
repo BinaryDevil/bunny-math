@@ -35,7 +35,7 @@ function label(q: Question) {
     case 'compare':
       return 'Bigger, smaller, or the same?';
     default:
-      return q.fact.op === '+' ? 'Add them up!' : 'Take away!';
+      return { '+': 'Add them up!', '-': 'Take away!', '×': 'Times!', '÷': 'Share it out!' }[q.fact.op];
   }
 }
 
@@ -54,7 +54,7 @@ function Prompt({ q, value, status }: { q: Question; value: string; status: Stat
           <p class="story-text">{q.story.text}</p>
         </div>
         <div class="story-ask">
-          {op === '+' ? 'How many now?' : 'How many are left?'} {slot}
+          {q.story.ask} {slot}
         </div>
       </>
     );

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'preact/hooks';
-import { LEVELS, compareSign, correctAnswer, generateQuiz, opSymbol } from '../lib/generator';
+import { compareSign, correctAnswer, generateQuiz, levelOf, opSymbol } from '../lib/generator';
 import { randomSeed } from '../lib/rng';
 import type { LevelId, Question } from '../lib/types';
 
@@ -35,7 +35,7 @@ function PrintedQuestion({ q }: { q: Question }) {
           <span class="story">
             {q.story.emoji} {q.story.text}
           </span>
-          {op === '+' ? 'How many now?' : 'How many are left?'} <Box />
+          {q.story.ask} <Box />
         </span>
       );
     default:
@@ -68,7 +68,7 @@ export function Worksheet({ level, count, onBack }: { level: LevelId; count: num
     const all = generateQuiz({ level, count: count * pageCount, seed, kinds: ['type', 'type', 'missing', 'compare', 'story'] });
     return Array.from({ length: pageCount }, (_, p) => fitOnePage(all.slice(p * count, (p + 1) * count)));
   }, [level, count, pageCount, seed]);
-  const lv = LEVELS.find((l) => l.id === level)!;
+  const lv = levelOf(level);
 
   return (
     <section class="screen print-screen">

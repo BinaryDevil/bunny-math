@@ -1,13 +1,17 @@
-import { LEVELS } from '../lib/generator';
+import { levelsFor, MODES } from '../lib/generator';
 import { sounds } from '../lib/sound';
 import type { Saved } from '../lib/storage';
-import type { LevelId } from '../lib/types';
+import type { LevelId, Mode } from '../lib/types';
 import { Bunny } from './Bunny';
 
 export const LENGTHS = [10, 15, 20];
 
 type Props = {
   saved: Saved;
+  mode: Mode;
+  level: LevelId;
+  onLevel: (l: LevelId) => void;
+  onMode: () => void;
   onChange: (patch: Partial<Saved>) => void;
   onStart: () => void;
   onStickers: () => void;
@@ -22,7 +26,8 @@ export function SoundButton({ on, onToggle }: { on: boolean; onToggle: () => voi
   );
 }
 
-export function Home({ saved, onChange, onStart, onStickers, onPrint }: Props) {
+export function Home({ saved, mode, level, onLevel, onMode, onChange, onStart, onStickers, onPrint }: Props) {
+  const levels = levelsFor(mode);
   const pick = (patch: Partial<Saved>) => {
     sounds.tap();
     onChange(patch);
@@ -30,6 +35,9 @@ export function Home({ saved, onChange, onStart, onStickers, onPrint }: Props) {
   return (
     <section class="screen">
       <header class="topbar">
+        <button class="puffy mode-btn" aria-label={`Practicing: ${MODES[mode].name}. Change`} onClick={onMode}>
+          {MODES[mode].signs} <span aria-hidden="true">▾</span>
+        </button>
         <span class="spacer" />
         <button class="puffy icon-btn" aria-label="Print a worksheet" onClick={onPrint}>
           🖨️
@@ -50,9 +58,13 @@ export function Home({ saved, onChange, onStart, onStickers, onPrint }: Props) {
           </div>
         </div>
         <div class="home-pick">
-          <div class="levels" role="radiogroup" aria-label="Level">
-            {LEVELS.map((l) => (
-              <button key={l.id} class="level" role="radio" aria-checked={saved.level === l.id} onClick={() => pick({ level: l.id as LevelId })}>
+          <div class={`levels n${levels.length}`} role="radiogroup" aria-label="Level">
+            {levels.map((l) => (
+              <button key={l.id} class="level" role="radio" aria-checked={level === l.id}
+                onClick={() => {
+                  sounds.tap();
+                  onLevel(l.id);
+                }}>
                 <span class="lv-name">{l.name}</span>
                 <span class="lv-eg">{l.example}</span>
                 {saved.best[l.id] ? (
