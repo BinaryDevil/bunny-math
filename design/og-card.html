@@ -1,0 +1,77 @@
+<!doctype html>
+<!-- The link-preview image (public/og.png). Render at 1200×630; see the README. -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Bunny Math share card</title>
+<style>
+  @font-face { font-family: "Mochiy Pop One"; src: url(../node_modules/@fontsource/mochiy-pop-one/files/mochiy-pop-one-latin-400-normal.woff2); }
+  @font-face { font-family: "Baloo 2"; font-weight: 800; src: url(../node_modules/@fontsource/baloo-2/files/baloo-2-latin-800-normal.woff2); }
+  @font-face { font-family: "Baloo 2"; font-weight: 700; src: url(../node_modules/@fontsource/baloo-2/files/baloo-2-latin-700-normal.woff2); }
+  :root { --ink: #4B2A5C; --ink-soft: #8C6E9B; --berry: #FF5C9A; --grid: #F8DDE9; }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    width: 1200px; height: 630px; overflow: hidden;
+    font-family: "Baloo 2", sans-serif; color: var(--ink);
+    background-color: #FFF7FA;
+    background-image: linear-gradient(var(--grid) 2px, transparent 2px), linear-gradient(90deg, var(--grid) 2px, transparent 2px);
+    background-size: 42px 42px;
+    display: grid; grid-template-columns: 380px 1fr 290px; align-items: center;
+    padding: 0 64px 0 76px;
+  }
+  /* The bunny sits in the middle square, so it survives square crops (WhatsApp thumbnails). */
+  .bunny { justify-self: center; width: 300px; }
+  .bunny svg { width: 100%; display: block; }
+  h1 { font-family: "Mochiy Pop One"; font-weight: 400; font-size: 92px; line-height: 1; }
+  h1 span { display: inline-block; }
+  h1 span:first-child { color: var(--berry); transform: rotate(-4deg); }
+  h1 span:last-child { transform: rotate(3deg); }
+  p { margin-top: 18px; font-weight: 700; font-size: 34px; line-height: 1.2; color: var(--ink-soft); }
+  .sums { display: flex; flex-direction: column; align-items: flex-start; gap: 22px; }
+  .sum {
+    background: #fff; border: 4px solid var(--ink); border-radius: 22px;
+    box-shadow: 0 7px 0 var(--ink);
+    padding: 6px 24px; font-weight: 800; font-size: 44px; line-height: 1.2;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .sum b { color: var(--berry); }
+  .sum:nth-child(1) { transform: rotate(3deg); background: #D5F6EA; }
+  .sum:nth-child(2) { transform: rotate(-2deg) translateX(-28px); background: #FFF1C4; }
+  .sum:nth-child(3) { transform: rotate(2deg); background: #E9E1FF; }
+  .sum:nth-child(4) { transform: rotate(-3deg) translateX(-18px); background: #FFD3E4; }
+</style>
+</head>
+<body>
+  <div class="text">
+    <h1><span>Bunny</span><br /><span>Math</span></h1>
+    <p>Math practice for kids, with step-by-step help</p>
+  </div>
+  <div class="bunny">
+    <svg viewBox="0 0 120 132" aria-hidden="true">
+      <g stroke="#4B2A5C" stroke-width="4" fill="#fff">
+        <ellipse cx="42" cy="34" rx="13" ry="32" transform="rotate(-8 42 34)" />
+        <ellipse cx="78" cy="34" rx="13" ry="32" transform="rotate(8 78 34)" />
+      </g>
+      <ellipse cx="42" cy="38" rx="6" ry="21" fill="#FFD3E4" transform="rotate(-8 42 38)" />
+      <ellipse cx="78" cy="38" rx="6" ry="21" fill="#FFD3E4" transform="rotate(8 78 38)" />
+      <ellipse cx="60" cy="90" rx="46" ry="38" fill="#fff" stroke="#4B2A5C" stroke-width="4" />
+      <g transform="translate(86 52) rotate(18)" stroke="#4B2A5C" stroke-width="3" stroke-linejoin="round" fill="#FF5C9A">
+        <path d="M0 0 L-14 -9 L-14 9 Z" /><path d="M0 0 L14 -9 L14 9 Z" /><circle r="4.5" />
+      </g>
+      <path d="M38 88 q7 -10 14 0 M68 88 q7 -10 14 0" stroke="#4B2A5C" stroke-width="4.5" stroke-linecap="round" fill="none" />
+      <ellipse cx="34" cy="100" rx="8" ry="5" fill="#FF9EC2" opacity=".75" />
+      <ellipse cx="86" cy="100" rx="8" ry="5" fill="#FF9EC2" opacity=".75" />
+      <path d="M56 93 h8 l-4 4 z" fill="#4B2A5C" stroke="#4B2A5C" stroke-width="2" stroke-linejoin="round" />
+      <path d="M52 98 q8 14 16 0 z" fill="#FF5C9A" stroke="#4B2A5C" stroke-width="3" stroke-linejoin="round" />
+      <ellipse cx="14" cy="76" rx="10" ry="12" fill="#fff" stroke="#4B2A5C" stroke-width="4" />
+      <ellipse cx="106" cy="76" rx="10" ry="12" fill="#fff" stroke="#4B2A5C" stroke-width="4" />
+    </svg>
+  </div>
+  <div class="sums">
+    <div class="sum">7 <b>+</b> 8</div>
+    <div class="sum">325 <b>−</b> 148</div>
+    <div class="sum">6 <b>×</b> 7</div>
+    <div class="sum">72 <b>÷</b> 4</div>
+  </div>
+</body>
+</html>

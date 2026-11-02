@@ -38,4 +38,4 @@ The build uses relative paths, so it works under any repo name.
 - `src/lib/explain.ts`: builds the "Show me how" steps
 - `src/components/`: the screens (home, quiz, results, sticker book, worksheet)
 - `src/styles.css`: colors, fonts, and layouts for tablets and phones
-- `design/`: the original clickable mockup
+- `design/`: the original clickable mockup, and `og-card.html`, the picture shown when the link is shared (`public/og.png`, 1200×630). After editing it, take a 1200×630 screenshot of it and save over `public/og.png`.
