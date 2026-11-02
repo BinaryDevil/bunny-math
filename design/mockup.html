@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bunny Math mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Mochiy+Pop+One&display=swap" rel="stylesheet">
+<style>
+/* ---------- Tokens ---------- */
+:root {
+  --paper: #FFF7FA;
+  --grid: #F8DDE9;
+  --card: #FFFFFF;
+  --ink: #4B2A5C;
+  --ink-soft: #8C6E9B;
+  --berry: #FF5C9A;
+  --berry-soft: #FFD3E4;
+  --lilac: #B9A2FF;
+  --lilac-soft: #E9E1FF;
+  --mint: #5FD8B0;
+  --mint-soft: #D5F6EA;
+  --butter: #FFD45E;
+  --peach: #FFB08A;
+  --peach-soft: #FFE6DA;
+
+  --line: 3px;
+  --press: 6px;
+  --r-lg: 28px;
+  --r-md: 20px;
+
+  --display: "Mochiy Pop One", "Baloo 2", system-ui, sans-serif;
+  --body: "Baloo 2", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  font-family: var(--body);
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1.5px, transparent 1.5px),
+    linear-gradient(90deg, var(--grid) 1.5px, transparent 1.5px);
+  background-size: 30px 30px;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 4px solid var(--lilac); outline-offset: 3px; }
+
+/* ---------- Puffy sticker button ---------- */
+.puffy {
+  border: var(--line) solid var(--ink);
+  border-radius: var(--r-md);
+  background: var(--card);
+  box-shadow: 0 var(--press) 0 var(--ink);
+  transition: transform .06s, box-shadow .06s;
+  font-weight: 800;
+}
+.puffy:active { transform: translateY(calc(var(--press) - 2px)); box-shadow: 0 2px 0 var(--ink); }
+.puffy.berry { background: var(--berry); color: #fff; }
+.puffy.mint { background: var(--mint); }
+.puffy.lilac { background: var(--lilac); }
+.puffy.ghost { background: transparent; box-shadow: none; border-color: transparent; }
+
+.icon-btn {
+  width: 48px; height: 48px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  font-size: 22px;
+  --press: 4px;
+}
+
+/* ---------- Screens ---------- */
+.screen {
+  display: none;
+  height: 100dvh;
+  padding:
+    max(12px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  position: relative;
+  overflow: hidden;
+}
+.screen.active { display: flex; flex-direction: column; }
+
+/* ---------- Top bar ---------- */
+.topbar { display: flex; align-items: center; gap: 12px; }
+.dots { flex: 1; min-width: 0; display: flex; justify-content: center; gap: clamp(3px, 0.8vw, 8px); list-style: none; margin: 0; padding: 0; }
+.dots li {
+  width: clamp(12px, 2.6vw, 22px); aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2.5px solid var(--ink-soft);
+  background: var(--card);
+}
+.dots li.ok { background: var(--butter); border-color: var(--ink); }
+.dots li.miss { background: var(--peach); border-color: var(--ink); }
+.dots li.now { border-color: var(--berry); border-width: 4px; transform: scale(1.25); }
+.count { font-weight: 800; font-size: 18px; color: var(--ink-soft); min-width: 3.5em; text-align: right; }
+
+/* ---------- Bunny ---------- */
+.bunny svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+/* ---------- Quiz ---------- */
+.quiz-body {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  gap: 16px;
+  padding-top: 12px;
+}
+.q-pane { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; padding-top: 56px; }
+.q-card {
+  position: relative;
+  container-type: inline-size;
+  background: var(--card);
+  border: var(--line) solid var(--ink);
+  border-radius: var(--r-lg);
+  box-shadow: 0 8px 0 var(--berry-soft);
+  padding: clamp(20px, 4cqi, 40px) clamp(16px, 4cqi, 40px) clamp(24px, 5cqi, 48px);
+  text-align: center;
+}
+.tape {
+  position: absolute; top: -14px; left: 22px;
+  width: 110px; height: 30px;
+  transform: rotate(-5deg);
+  background: repeating-linear-gradient(45deg, rgba(185,162,255,.75) 0 10px, rgba(255,255,255,.75) 10px 20px);
+  border-radius: 3px;
+}
+.peek {
+  position: absolute;
+  right: clamp(16px, 8cqi, 64px);
+  bottom: calc(100% - 22px);
+  width: clamp(76px, 18cqi, 128px);
+  aspect-ratio: 120 / 130;
+}
+.bubble {
+  position: absolute;
+  right: calc(100% + 8px);
+  top: 18%;
+  white-space: nowrap;
+  background: var(--card);
+  border: var(--line) solid var(--ink);
+  border-radius: 18px;
+  padding: 4px 14px;
+  font-weight: 700;
+  font-size: clamp(14px, 3.2cqi, 20px);
+}
+.bubble::after {
+  content: ""; position: absolute; right: -10px; top: 50%;
+  width: 14px; height: 14px; background: var(--card);
+  border-right: var(--line) solid var(--ink); border-top: var(--line) solid var(--ink);
+  transform: translateY(-50%) rotate(45deg);
+}
+.q-label { margin: 0 0 4px; font-weight: 700; color: var(--ink-soft); font-size: clamp(16px, 3.6cqi, 24px); }
+.equation {
+  display: flex; align-items: center; justify-content: center;
+  gap: .22em;
+  font-weight: 800;
+  font-size: clamp(40px, min(15cqi, 15dvh), 128px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.equation .op { color: var(--berry); }
+.slot {
+  min-width: 1.7em; height: 1.25em;
+  padding: 0 .15em;
+  border: 4px dashed var(--lilac);
+  border-radius: .25em;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--lilac-soft);
+  color: var(--ink);
+}
+.slot:empty::after { content: ""; width: 4px; height: .8em; background: var(--lilac); border-radius: 2px; animation: blink 1s steps(2) infinite; }
+.slot.right { border: 4px solid var(--mint); background: var(--mint-soft); }
+.slot.wrong { border: 4px solid var(--peach); background: var(--peach-soft); animation: wobble .4s; }
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes wobble { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+
+.hint-row { display: flex; justify-content: center; margin-top: 14px; }
+.hint-btn { padding: 8px 18px; font-size: 18px; --press: 4px; background: var(--butter); }
+
+.pad-pane { display: flex; flex-direction: column; gap: 12px; }
+.pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.key {
+  height: clamp(52px, 8.2dvh, 84px);
+  font-size: clamp(26px, 4.4dvh, 40px);
+}
+.key.back { background: var(--lilac-soft); }
+.check { height: clamp(56px, 8.5dvh, 80px); font-size: clamp(22px, 3.6dvh, 30px); }
+.check:disabled { background: var(--berry-soft); color: var(--ink-soft); box-shadow: 0 var(--press) 0 var(--ink-soft); border-color: var(--ink-soft); }
+
+/* Feedback banner */
+.feedback {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  display: none;
+  align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 18px max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  border-top: var(--line) solid var(--ink);
+  animation: slideup .25s ease-out;
+  z-index: 5;
+}
+.feedback.show { display: flex; }
+.feedback.good { background: var(--mint-soft); }
+.feedback.bad { background: var(--peach-soft); }
+.fb-face { width: 64px; aspect-ratio: 120/130; flex: none; }
+.fb-text { flex: 1; min-width: 180px; }
+.fb-title { font-family: var(--display); font-size: clamp(20px, 3.4dvh, 28px); margin: 0; }
+.fb-sub { margin: 0; font-weight: 600; font-size: 18px; }
+.fb-actions { display: flex; gap: 12px; }
+.fb-actions .puffy { padding: 10px 24px; font-size: 20px; min-height: 56px; }
+@keyframes slideup { from { transform: translateY(100%); } }
+
+/* ---------- Explanation sheet ---------- */
+.scrim { position: absolute; inset: 0; background: rgba(75,42,92,.45); display: none; z-index: 10; }
+.scrim.show { display: block; }
+.sheet {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  max-height: 88dvh;
+  background: var(--card);
+  border-top: var(--line) solid var(--ink);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  padding: 20px 20px max(20px, env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 14px;
+  animation: slideup .3s ease-out;
+}
+.sheet-head { display: flex; align-items: center; justify-content: space-between; }
+.sheet-title { font-family: var(--display); font-size: 22px; margin: 0; }
+.stage {
+  flex: 1; min-height: 200px;
+  border-radius: var(--r-md);
+  background: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1.5px, transparent 1.5px),
+    linear-gradient(90deg, var(--grid) 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
+  border: 2.5px dashed var(--lilac);
+  display: flex; align-items: center; justify-content: center;
+  gap: clamp(12px, 3vw, 32px);
+  padding: 16px;
+  flex-wrap: wrap;
+  --u: clamp(11px, min(3.4vmin, 4.4dvh), 32px);
+}
+.group { display: flex; align-items: flex-end; gap: calc(var(--u) * .5); }
+.rod {
+  width: var(--u);
+  display: grid; grid-template-rows: repeat(10, var(--u));
+  border: 2px solid var(--ink); border-radius: 4px; overflow: hidden;
+  background: var(--lilac);
+}
+.rod i { border-bottom: 1.5px solid rgba(75,42,92,.35); }
+.rod i:last-child { border-bottom: 0; }
+.rod.new { background: var(--mint); animation: pop .5s cubic-bezier(.3,1.6,.5,1); }
+.ones { display: grid; grid-template-columns: repeat(5, var(--u)); gap: 3px; align-content: end; }
+.ones.frame { padding: 4px; border-radius: 8px; }
+.cube { width: var(--u); height: var(--u); border: 2px solid var(--ink); border-radius: 4px; background: var(--lilac); }
+.cube.b { background: var(--berry); }
+.cube.ten { outline: 3px solid var(--butter); outline-offset: 1px; }
+.plus { font-weight: 800; font-size: calc(var(--u) * 2.4); color: var(--berry); align-self: center; }
+.tally { align-self: center; font-weight: 800; font-size: calc(var(--u) * 1.6); }
+@keyframes pop { from { transform: scale(0); } }
+
+.caption { font-family: var(--display); font-size: clamp(20px, 3.6dvh, 30px); text-align: center; margin: 0; line-height: 1.3; }
+.caption b { color: var(--berry); font-weight: 400; }
+.sheet-foot { display: flex; align-items: center; gap: 12px; }
+.steps { flex: 1; display: flex; justify-content: center; gap: 8px; }
+.steps span { width: 12px; height: 12px; border-radius: 50%; background: var(--grid); border: 2px solid var(--ink-soft); }
+.steps span.on { background: var(--berry); border-color: var(--ink); width: 28px; border-radius: 8px; }
+.sheet-foot .puffy { padding: 8px 22px; min-height: 56px; font-size: 20px; }
+
+/* ---------- Home ---------- */
+.home-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; justify-content: center; }
+.hero { display: flex; align-items: center; gap: 16px; justify-content: center; }
+.hero .bunny { width: clamp(90px, 16dvh, 180px); aspect-ratio: 120/130; flex: none; }
+.title { font-family: var(--display); font-size: clamp(36px, 7dvh, 64px); margin: 0; line-height: 1; }
+.title span { display: inline-block; }
+.title span:nth-child(odd) { color: var(--berry); transform: rotate(-4deg); }
+.title span:nth-child(even) { transform: rotate(3deg); }
+.tagline { margin: 6px 0 0; font-size: clamp(18px, 2.6dvh, 22px); font-weight: 600; color: var(--ink-soft); }
+
+.levels { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.level {
+  position: relative;
+  text-align: left;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  border: var(--line) solid var(--ink);
+  box-shadow: 0 0 0 5px var(--card), 0 0 0 calc(5px + var(--line)) var(--ink-soft);
+  margin: 8px;
+}
+.level:nth-child(1) { background: var(--mint-soft); transform: rotate(-1.5deg); }
+.level:nth-child(2) { background: #FFF1C4; transform: rotate(1deg); }
+.level:nth-child(3) { background: var(--lilac-soft); transform: rotate(1.5deg); }
+.level:nth-child(4) { background: var(--berry-soft); transform: rotate(-1deg); }
+.level.sel { box-shadow: 0 0 0 5px var(--card), 0 0 0 calc(5px + var(--line)) var(--berry); }
+.level.sel::after {
+  content: "✓"; position: absolute; top: -14px; right: -14px;
+  width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--berry); color: #fff; border: var(--line) solid var(--ink);
+  font-weight: 800;
+}
+.lv-name { display: block; font-weight: 800; font-size: clamp(18px, 2.8dvh, 24px); }
+.lv-eg { display: block; font-weight: 700; font-size: clamp(22px, 3.6dvh, 32px); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.length { display: flex; align-items: center; gap: 12px; justify-content: center; font-weight: 700; font-size: 20px; }
+.seg { display: flex; border: var(--line) solid var(--ink); border-radius: 999px; overflow: hidden; background: var(--card); }
+.seg button { border: 0; background: transparent; padding: 8px 20px; font-weight: 800; font-size: 20px; min-height: 48px; }
+.seg button + button { border-left: var(--line) solid var(--ink); }
+.seg button.on { background: var(--butter); }
+.home-pick { display: flex; flex-direction: column; gap: 16px; }
+.puffy { white-space: nowrap; }
+.start { height: clamp(60px, 9dvh, 84px); font-family: var(--display); font-size: clamp(24px, 4dvh, 34px); font-weight: 400; }
+
+/* ---------- Results ---------- */
+.res-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; padding: 8px 4px 4px; }
+.res-hero { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.stars { display: flex; align-items: flex-end; gap: 6px; }
+.stars svg { width: clamp(56px, 10dvh, 96px); height: auto; animation: starpop .5s cubic-bezier(.3,1.6,.5,1) both; }
+.stars svg:nth-child(2) { width: clamp(72px, 13dvh, 124px); animation-delay: .25s; }
+.stars svg:nth-child(3) { animation-delay: .5s; }
+@keyframes starpop { from { transform: scale(0) rotate(-30deg); } }
+.score { font-family: var(--display); font-size: clamp(30px, 6dvh, 52px); margin: 0; }
+.res-hero .bunny { width: clamp(80px, 14dvh, 140px); aspect-ratio: 120/130; }
+.panel {
+  background: var(--card);
+  border: var(--line) solid var(--ink);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+}
+.panel h2 { font-family: var(--display); font-weight: 400; font-size: 20px; margin: 0 0 10px; }
+.qgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 8px; }
+.qgrid button {
+  height: 52px; border-radius: 16px;
+  border: 2.5px solid var(--ink);
+  font-weight: 800; font-size: 18px;
+  background: var(--mint-soft);
+}
+.qgrid button.x { background: var(--peach); }
+.skills { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.skills li { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; }
+.chip { margin-left: auto; padding: 2px 12px; border-radius: 999px; border: 2px solid var(--ink); font-size: 15px; font-weight: 800; }
+.chip.great { background: var(--butter); }
+.chip.grow { background: var(--mint-soft); }
+.sticker-row { display: flex; align-items: center; gap: 14px; }
+.sticker {
+  width: 76px; height: 76px; flex: none;
+  border-radius: 50%;
+  background: var(--berry-soft);
+  border: 5px solid var(--card);
+  box-shadow: 0 0 0 var(--line) var(--ink), 4px 6px 0 rgba(75,42,92,.25);
+  display: grid; place-items: center;
+  font-size: 40px;
+  transform: rotate(-10deg);
+}
+.res-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.res-actions .puffy { flex: 1; min-width: 180px; height: 64px; font-size: 21px; }
+
+/* ---------- Layout: landscape (tablets, laptops) ---------- */
+@media (orientation: landscape) {
+  .quiz-body { flex-direction: row; gap: clamp(20px, 4vw, 56px); align-items: center; padding: 12px clamp(0px, 2vw, 32px) 0; }
+  .q-pane { flex: 1.25; height: 100%; }
+  .pad-pane { flex: 1; max-width: 460px; }
+  .key { height: clamp(44px, 12dvh, 100px); font-size: clamp(24px, 5.5dvh, 46px); }
+  .check { height: clamp(48px, 11dvh, 88px); }
+
+  .scrim .sheet { left: 50%; top: 50%; bottom: auto; transform: translate(-50%, -50%); width: min(1040px, 92vw); max-height: 90dvh; border: var(--line) solid var(--ink); border-radius: var(--r-lg); animation: fadein .2s; }
+  @keyframes fadein { from { opacity: 0; } }
+  .sheet { display: grid; grid-template-columns: 1.4fr 1fr; grid-template-rows: auto 1fr auto; column-gap: 24px; }
+  .sheet-head { grid-column: 1 / -1; }
+  .stage { grid-row: 2 / 4; min-height: 0; height: min(56dvh, 460px); }
+  .caption { align-self: center; text-align: left; }
+  .sheet-foot { grid-column: 2; flex-wrap: wrap; }
+  .sheet-foot .steps { flex-basis: 100%; justify-content: flex-start; margin-bottom: 6px; }
+
+  .home-body { flex-direction: row; align-items: center; gap: clamp(24px, 5vw, 72px); padding: 0 clamp(0px, 3vw, 48px); }
+  .hero { flex-direction: column; text-align: center; flex: 1; }
+  .hero .bunny { width: clamp(100px, 30dvh, 240px); }
+  .home-pick { flex: 1.2; display: flex; flex-direction: column; gap: 16px; }
+
+  .res-body { flex-direction: row; overflow: hidden; align-items: stretch; gap: clamp(20px, 3vw, 40px); padding: 8px clamp(0px, 2vw, 32px) 0; }
+  .res-hero { flex: 0.8; justify-content: center; }
+  .res-side { flex: 1.2; display: flex; flex-direction: column; gap: 14px; justify-content: center; min-height: 0; }
+}
+
+/* Short screens: phones held sideways */
+@media (orientation: landscape) and (max-height: 500px) {
+  .peek .bubble, .hint-row { display: none; }
+  .q-pane { padding-top: 40px; }
+  .peek { width: 64px; }
+  .pad { gap: 6px; }
+  .pad-pane { gap: 8px; }
+  .hero .bunny, .res-hero .bunny { display: none; }
+  .levels { gap: 6px; }
+  .level { padding: 4px 12px; margin: 6px; }
+  .skills li { font-size: 16px; }
+  .panel { padding: 10px 14px; }
+  .res-body { overflow-y: auto; }
+  .stage { height: auto; }
+  .fb-face { display: none; }
+}
+
+/* Portrait phones: hide speech bubble if tight */
+@media (orientation: portrait) and (max-width: 420px) {
+  .bubble, .count { display: none; }
+  .dots li { width: auto; flex: 1 1 0; max-width: 16px; border-width: 2px; }
+  .sheet-foot .puffy { padding: 8px 16px; }
+  .fb-actions .puffy { padding: 10px 12px; font-size: 18px; }
+  .levels { gap: 8px; }
+  .level { margin: 6px; padding: 8px 12px; }
+  .fb-actions { width: 100%; }
+  .fb-actions .puffy { flex: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---------- Mockup-only switcher ---------- */
+.mock-nav {
+  position: fixed; left: 8px; bottom: 8px;
+  z-index: 100;
+  display: flex; gap: 4px;
+  background: rgba(75,42,92,.9); padding: 4px; border-radius: 999px;
+}
+.mock-nav a { color: #fff; text-decoration: none; font: 600 13px system-ui, sans-serif; padding: 4px 10px; border-radius: 999px; }
+.mock-nav a.on { background: var(--berry); }
+body.bare .mock-nav { display: none; }
+</style>
+</head>
+<body>
+
+<nav class="mock-nav" aria-label="Mockup screens">
+  <a href="#home">Home</a><a href="#quiz">Quiz</a><a href="#correct">Correct</a><a href="#wrong">Wrong</a><a href="#explain">Show me how</a><a href="#results">Results</a>
+</nav>
+
+<!-- ============ HOME ============ -->
+<section class="screen" id="s-home">
+  <header class="topbar">
+    <span style="flex:1"></span>
+    <button class="puffy icon-btn" aria-label="Sticker book">📒</button>
+    <button class="puffy icon-btn" aria-label="Sound on">🔊</button>
+  </header>
+  <div class="home-body">
+    <div class="hero">
+      <div class="bunny" data-mood="happy"></div>
+      <div>
+        <h1 class="title"><span>Bunny</span> <span>Math</span></h1>
+        <p class="tagline">Pick a level and let's hop to it!</p>
+      </div>
+    </div>
+    <div class="home-pick">
+      <div class="levels" role="radiogroup" aria-label="Level">
+        <button class="level" role="radio"><span class="lv-name">Warm-up</span><span class="lv-eg">7 + 8</span></button>
+        <button class="level" role="radio"><span class="lv-name">Big + small</span><span class="lv-eg">34 + 5</span></button>
+        <button class="level sel" role="radio" aria-checked="true"><span class="lv-name">Tricky ones</span><span class="lv-eg">38 + 7</span></button>
+        <button class="level" role="radio"><span class="lv-name">Double digits</span><span class="lv-eg">46 + 37</span></button>
+      </div>
+      <div class="length">
+        <span>Questions</span>
+        <div class="seg"><button>10</button><button class="on">15</button><button>20</button></div>
+      </div>
+      <button class="puffy berry start" onclick="location.hash='quiz'">Start!</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUIZ ============ -->
+<section class="screen" id="s-quiz">
+  <header class="topbar">
+    <button class="puffy icon-btn" aria-label="Quit" onclick="location.hash='home'">✕</button>
+    <ol class="dots" aria-label="Progress">
+      <li class="ok"></li><li class="ok"></li><li class="miss"></li><li class="ok"></li><li class="ok"></li><li class="ok"></li>
+      <li class="now"></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li>
+    </ol>
+    <span class="count">7 / 15</span>
+    <button class="puffy icon-btn" aria-label="Sound on">🔊</button>
+  </header>
+
+  <div class="quiz-body">
+    <div class="q-pane">
+      <div class="q-card">
+        <span class="tape"></span>
+        <div class="peek bunny" data-mood="normal" id="peek"><span class="bubble" id="bubble">You can do it!</span></div>
+        <p class="q-label">Add them up!</p>
+        <div class="equation" aria-live="polite">
+          <span>38</span><span class="op">+</span><span>7</span><span class="op">=</span><span class="slot" id="slot"></span>
+        </div>
+        <div class="hint-row"><button class="puffy hint-btn" onclick="openExplain()">💡 Show me how</button></div>
+      </div>
+    </div>
+    <div class="pad-pane">
+      <div class="pad" id="pad">
+        <button class="puffy key">7</button><button class="puffy key">8</button><button class="puffy key">9</button>
+        <button class="puffy key">4</button><button class="puffy key">5</button><button class="puffy key">6</button>
+        <button class="puffy key">1</button><button class="puffy key">2</button><button class="puffy key">3</button>
+        <button class="puffy key back" data-k="back" aria-label="Delete">⌫</button><button class="puffy key">0</button><button class="puffy key back" data-k="clear" aria-label="Clear">✕</button>
+      </div>
+      <button class="puffy berry check" id="check" disabled>Check</button>
+    </div>
+  </div>
+
+  <div class="feedback good" id="fb-good">
+    <div class="fb-face bunny" data-mood="happy"></div>
+    <div class="fb-text"><p class="fb-title">Yes! ⭐</p><p class="fb-sub">38 + 7 = 45</p></div>
+    <div class="fb-actions"><button class="puffy mint" onclick="location.hash='results'">Next</button></div>
+  </div>
+  <div class="feedback bad" id="fb-bad">
+    <div class="fb-face bunny" data-mood="think"></div>
+    <div class="fb-text"><p class="fb-title">So close!</p><p class="fb-sub">Have one more go.</p></div>
+    <div class="fb-actions">
+      <button class="puffy" style="background:var(--butter)" onclick="openExplain()">💡 Show me how</button>
+      <button class="puffy berry" onclick="retry()">Try again</button>
+    </div>
+  </div>
+
+  <div class="scrim" id="scrim">
+    <div class="sheet" role="dialog" aria-label="How to solve 38 + 7">
+      <div class="sheet-head">
+        <p class="sheet-title">38 + 7</p>
+        <button class="puffy icon-btn" aria-label="Close" onclick="closeExplain()">✕</button>
+      </div>
+      <div class="stage" id="stage"></div>
+      <p class="caption" id="caption"></p>
+      <div class="sheet-foot">
+        <div class="steps" id="steps"></div>
+        <button class="puffy" id="prev" onclick="step(-1)">◀ Back</button>
+        <button class="puffy berry" id="next" onclick="step(1)">Next ▶</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RESULTS ============ -->
+<section class="screen" id="s-results">
+  <header class="topbar">
+    <button class="puffy icon-btn" aria-label="Home" onclick="location.hash='home'">🏠</button>
+    <span style="flex:1"></span>
+  </header>
+  <div class="res-body">
+    <div class="res-hero">
+      <div class="stars" id="stars"></div>
+      <p class="score">13 out of 15!</p>
+      <div class="bunny" data-mood="cheer"></div>
+    </div>
+    <div class="res-side">
+      <div class="panel">
+        <h2>Your answers</h2>
+        <div class="qgrid" id="qgrid"></div>
+      </div>
+      <div class="panel">
+        <ul class="skills">
+          <li>➕ Adding <span class="chip great">⭐ Super!</span></li>
+          <li>🧱 Carrying <span class="chip great">⭐ Super!</span></li>
+          <li>➖ Borrowing <span class="chip grow">🌱 Keep practicing</span></li>
+        </ul>
+      </div>
+      <div class="panel sticker-row">
+        <div class="sticker">🍓</div>
+        <div><b style="font-size:20px">New sticker!</b><br><span style="color:var(--ink-soft);font-weight:600">Strawberry joined your sticker book.</span></div>
+      </div>
+      <div class="res-actions">
+        <button class="puffy" style="background:var(--butter)">Practice my 2 mistakes</button>
+        <button class="puffy berry" onclick="location.hash='home'">Play again</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ---------- Bunny ---------- */
+function bunnySVG(mood) {
+  const ink = '#4B2A5C';
+  const eyes = {
+    normal: `<circle cx="45" cy="86" r="6" fill="${ink}"/><circle cx="75" cy="86" r="6" fill="${ink}"/>
+             <circle cx="47" cy="84" r="2" fill="#fff"/><circle cx="77" cy="84" r="2" fill="#fff"/>`,
+    happy:  `<path d="M38 88 q7 -10 14 0 M68 88 q7 -10 14 0" stroke="${ink}" stroke-width="4.5" fill="none" stroke-linecap="round"/>`,
+    cheer:  `<path d="M38 88 q7 -10 14 0 M68 88 q7 -10 14 0" stroke="${ink}" stroke-width="4.5" fill="none" stroke-linecap="round"/>`,
+    think:  `<circle cx="45" cy="86" r="6" fill="${ink}"/><circle cx="75" cy="86" r="6" fill="${ink}"/>
+             <circle cx="47" cy="84" r="2" fill="#fff"/><circle cx="77" cy="84" r="2" fill="#fff"/>
+             <path d="M37 76 q6 -5 13 -5 M83 76 q-6 -5 -13 -5" stroke="${ink}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
+  }[mood];
+  const mouth = mood === 'think'
+    ? `<path d="M54 102 q6 -3 12 0" stroke="${ink}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
+    : mood === 'cheer'
+    ? `<path d="M52 98 q8 14 16 0 z" fill="#FF5C9A" stroke="${ink}" stroke-width="3" stroke-linejoin="round"/>`
+    : `<path d="M53 99 q3.5 5 7 0 q3.5 5 7 0" stroke="${ink}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+  const arms = mood === 'cheer'
+    ? `<ellipse cx="14" cy="76" rx="10" ry="12" fill="#fff" stroke="${ink}" stroke-width="4"/><ellipse cx="106" cy="76" rx="10" ry="12" fill="#fff" stroke="${ink}" stroke-width="4"/>`
+    : `<ellipse cx="38" cy="124" rx="12" ry="8" fill="#fff" stroke="${ink}" stroke-width="4"/><ellipse cx="82" cy="124" rx="12" ry="8" fill="#fff" stroke="${ink}" stroke-width="4"/>`;
+  return `<svg viewBox="0 0 120 132" aria-hidden="true">
+    <g stroke="${ink}" stroke-width="4">
+      <ellipse cx="42" cy="34" rx="13" ry="32" fill="#fff" transform="rotate(-8 42 34)"/>
+      <ellipse cx="78" cy="34" rx="13" ry="32" fill="#fff" transform="rotate(8 78 34)"/>
+    </g>
+    <ellipse cx="42" cy="38" rx="6" ry="21" fill="#FFD3E4" transform="rotate(-8 42 38)"/>
+    <ellipse cx="78" cy="38" rx="6" ry="21" fill="#FFD3E4" transform="rotate(8 78 38)"/>
+    <ellipse cx="60" cy="90" rx="46" ry="38" fill="#fff" stroke="${ink}" stroke-width="4"/>
+    <g transform="translate(86 52) rotate(18)" stroke="${ink}" stroke-width="3" stroke-linejoin="round">
+      <path d="M0 0 L-14 -9 L-14 9 Z" fill="#FF5C9A"/><path d="M0 0 L14 -9 L14 9 Z" fill="#FF5C9A"/>
+      <circle r="4.5" fill="#FF5C9A"/>
+    </g>
+    ${eyes}
+    <ellipse cx="34" cy="100" rx="8" ry="5" fill="#FF9EC2" opacity=".75"/>
+    <ellipse cx="86" cy="100" rx="8" ry="5" fill="#FF9EC2" opacity=".75"/>
+    <path d="M56 93 h8 l-4 4 z" fill="${ink}" stroke="${ink}" stroke-width="2" stroke-linejoin="round"/>
+    ${mouth}
+    ${arms}
+  </svg>`;
+}
+function paintBunnies(root = document) {
+  root.querySelectorAll('.bunny').forEach(el => {
+    const bubble = el.querySelector('.bubble');
+    el.innerHTML = bunnySVG(el.dataset.mood || 'normal');
+    if (bubble) el.prepend(bubble);
+  });
+}
+
+/* ---------- Stars + results grid ---------- */
+const starSVG = `<svg viewBox="0 0 100 96"><path d="M50 6 L62 36 L94 38 L69 58 L77 90 L50 72 L23 90 L31 58 L6 38 L38 36 Z" fill="#FFD45E" stroke="#4B2A5C" stroke-width="6" stroke-linejoin="round"/><path d="M36 44 q6 -4 10 0" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" opacity=".8"/></svg>`;
+document.getElementById('stars').innerHTML = starSVG.repeat(3);
+const missed = [3, 11];
+document.getElementById('qgrid').innerHTML = Array.from({length: 15}, (_, i) =>
+  `<button class="${missed.includes(i + 1) ? 'x' : ''}" aria-label="Question ${i + 1}">${missed.includes(i + 1) ? '✗' : '✓'}</button>`).join('');
+
+/* ---------- Quiz interaction ---------- */
+const slot = document.getElementById('slot');
+const check = document.getElementById('check');
+let tries = 0;
+function setAnswer(v) {
+  slot.textContent = v; slot.className = 'slot';
+  check.disabled = v === '';
+}
+document.getElementById('pad').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const k = b.dataset.k;
+  if (k === 'back') setAnswer(slot.textContent.slice(0, -1));
+  else if (k === 'clear') setAnswer('');
+  else if (slot.textContent.length < 3) setAnswer(slot.textContent + b.textContent);
+});
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('s-quiz').classList.contains('active')) return;
+  if (/^[0-9]$/.test(e.key) && slot.textContent.length < 3) setAnswer(slot.textContent + e.key);
+  if (e.key === 'Backspace') setAnswer(slot.textContent.slice(0, -1));
+  if (e.key === 'Enter' && !check.disabled) doCheck();
+});
+check.addEventListener('click', doCheck);
+function doCheck() {
+  const ok = slot.textContent === '45';
+  slot.className = 'slot ' + (ok ? 'right' : 'wrong');
+  document.getElementById('peek').dataset.mood = ok ? 'happy' : 'think';
+  paintBunnies(document.getElementById('peek').parentElement);
+  document.getElementById('bubble').textContent = ok ? 'Hooray!' : 'Hmm…';
+  document.getElementById(ok ? 'fb-good' : 'fb-bad').classList.add('show');
+  tries++;
+}
+function retry() {
+  document.getElementById('fb-bad').classList.remove('show');
+  setAnswer('');
+  document.getElementById('peek').dataset.mood = 'normal';
+  paintBunnies(document.getElementById('peek').parentElement);
+  document.getElementById('bubble').textContent = 'You can do it!';
+}
+
+/* ---------- Explanation: 38 + 7 with blocks ---------- */
+const rods = n => Array.from({length: n}, () => `<div class="rod">${'<i></i>'.repeat(10)}</div>`).join('');
+const cubes = (n, cls = '', mark = 0) => Array.from({length: n}, (_, i) => `<div class="cube ${cls} ${i < mark ? 'ten' : ''}"></div>`).join('');
+const steps = [
+  { stage: `<div class="group">${rods(3)}<div class="ones">${cubes(8)}</div></div><span class="plus">+</span><div class="group"><div class="ones">${cubes(7, 'b')}</div></div>`,
+    caption: `38 is <b>3 tens</b> and <b>8 ones</b>.` },
+  { stage: `<div class="group">${rods(3)}<div class="ones">${cubes(8)}${cubes(7, 'b')}</div></div>`,
+    caption: `Put the ones together.<br><b>8 + 7 = 15</b> ones` },
+  { stage: `<div class="group">${rods(3)}<div class="ones">${cubes(8, '', 8)}${cubes(2, 'b', 2)}${cubes(5, 'b')}</div></div>`,
+    caption: `Circle <b>10 ones</b>…` },
+  { stage: `<div class="group">${rods(3)}<div class="rod new">${'<i></i>'.repeat(10)}</div><div class="ones">${cubes(5, 'b')}</div></div>`,
+    caption: `…and they turn into <b>1 ten!</b>` },
+  { stage: `<div class="group">${rods(4)}<div class="ones">${cubes(5, 'b')}</div></div><span class="tally">= 45</span>`,
+    caption: `4 tens and 5 ones.<br><b>38 + 7 = 45</b> 🎉` },
+];
+let cur = 0;
+function render() {
+  document.getElementById('stage').innerHTML = steps[cur].stage;
+  document.getElementById('caption').innerHTML = steps[cur].caption;
+  document.getElementById('steps').innerHTML = steps.map((_, i) => `<span class="${i === cur ? 'on' : ''}"></span>`).join('');
+  document.getElementById('prev').style.visibility = cur ? 'visible' : 'hidden';
+  document.getElementById('next').textContent = cur === steps.length - 1 ? 'Got it!' : 'Next ▶';
+}
+function step(d) {
+  if (cur === steps.length - 1 && d > 0) return closeExplain();
+  cur = Math.max(0, Math.min(steps.length - 1, cur + d)); render();
+}
+function openExplain() { cur = 0; render(); document.getElementById('scrim').classList.add('show'); }
+function closeExplain() { document.getElementById('scrim').classList.remove('show'); }
+
+/* ---------- Mockup routing ---------- */
+if (new URLSearchParams(location.search).has('bare')) document.body.classList.add('bare');
+function route() {
+  const h = location.hash.slice(1) || 'home';
+  const screen = ['quiz', 'correct', 'wrong', 'explain'].includes(h) ? 'quiz' : h;
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 's-' + screen));
+  document.querySelectorAll('.mock-nav a').forEach(a => a.classList.toggle('on', a.hash === '#' + h));
+  document.querySelectorAll('.feedback').forEach(f => f.classList.remove('show'));
+  closeExplain();
+  setAnswer('');
+  document.getElementById('peek').dataset.mood = 'normal';
+  document.getElementById('bubble').textContent = 'You can do it!';
+  if (h === 'correct') { setAnswer('45'); doCheck(); }
+  if (h === 'wrong') { setAnswer('35'); doCheck(); }
+  if (h === 'explain') { openExplain(); if (new URLSearchParams(location.search).has('step')) { cur = +new URLSearchParams(location.search).get('step'); render(); } }
+  paintBunnies();
+}
+window.addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>

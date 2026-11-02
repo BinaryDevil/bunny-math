@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bunny Math screens</title>
+<style>
+  :root { --bg: #F3EEF6; --ink: #4B2A5C; }
+  body { margin: 0; padding: 24px 16px 48px; background: var(--bg); color: var(--ink); font: 15px/1.4 system-ui, sans-serif; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.note { margin: 0 0 24px; color: #7a6688; }
+  h2 { font-size: 17px; margin: 32px 0 10px; }
+  .row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+  figure { margin: 0; }
+  figcaption { font-size: 12px; color: #7a6688; margin-top: 6px; }
+  .frame { overflow: hidden; border-radius: 14px; border: 6px solid #2b1a35; background: #2b1a35; }
+  .frame iframe { border: 0; transform-origin: 0 0; display: block; }
+</style>
+</head>
+<body>
+<h1>Bunny Math: screen gallery</h1>
+<p class="note">Each frame loads the real mockup at that screen size. Open <a href="mockup.html">mockup.html</a> to click through it.</p>
+<div id="out"></div>
+<script>
+const screens = [
+  ['home', 'Home: pick a level'],
+  ['quiz', 'Quiz: type the answer'],
+  ['correct', 'Correct answer'],
+  ['wrong', 'Wrong answer'],
+  ['explain', 'Show me how (step 3 of 5)', '&step=3'],
+  ['results', 'Results'],
+];
+const devices = [
+  ['Android tablet 1280×800', 1280, 800, 0.42],
+  ['iPad 1180×820', 1180, 820, 0.42],
+  ['Phone 390×844', 390, 844, 0.42],
+  ['Phone sideways 844×390', 844, 390, 0.42],
+];
+document.getElementById('out').innerHTML = screens.map(([id, label, extra = '']) => `
+  <h2>${label}</h2>
+  <div class="row">${devices.map(([name, w, h, s]) => `
+    <figure>
+      <div class="frame" style="width:${w * s}px;height:${h * s}px">
+        <iframe src="mockup.html?bare${extra}#${id}" width="${w}" height="${h}" style="transform:scale(${s})" loading="lazy" title="${label}, ${name}"></iframe>
+      </div>
+      <figcaption>${name}</figcaption>
+    </figure>`).join('')}
+  </div>`).join('');
+</script>
+</body>
+</html>
