@@ -492,6 +492,7 @@ h1, h2, p { margin: 0; }
 /* ---------- Printable worksheet ---------- */
 .print-screen { height: auto; min-height: 100dvh; overflow: visible; }
 .print-bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.print-bar .length { margin: 0 8px; }
 .print-bar .puffy { min-height: 52px; padding: 6px 20px; font-size: 19px; }
 .sheet-paper {
   background: #fff; color: #222;
@@ -515,9 +516,13 @@ h1, h2, p { margin: 0; }
   .ws-head { flex-direction: column; align-items: flex-start; }
   .ws-lines { text-align: left; }
 }
-.ws-key { margin-top: 32px; padding-top: 12px; border-top: 2px dashed #bbb; font-size: 14px; color: #555; break-before: page; }
-.ws-key h2 { font-size: 16px; margin-bottom: 6px; }
-.ws-key ol { columns: 4; margin: 0; padding-left: 1.6em; }
+/* Each sheet is its own printed page; answers always start on a fresh page after the last sheet. */
+.sheet-paper + .sheet-paper { margin-top: 24px; break-before: page; }
+.ws-answers .ws-title { margin-bottom: 12px; }
+.ws-key { font-size: 16px; color: #333; break-inside: avoid; }
+.ws-key + .ws-key { margin-top: 14px; padding-top: 10px; border-top: 2px dashed #ccc; }
+.ws-key h3 { font-size: 16px; margin: 0 0 6px; }
+.ws-key ol { columns: 5; margin: 0; padding-left: 1.8em; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 @media print {
   @page { margin: 14mm; }
@@ -525,4 +530,6 @@ h1, h2, p { margin: 0; }
   .no-print { display: none !important; }
   .print-screen { padding: 0; }
   .sheet-paper { border: 0; padding: 0; max-width: none; }
+  .sheet-paper + .sheet-paper { margin-top: 0; }
+  .ws-grid { gap: 18px 40px; }
 }
