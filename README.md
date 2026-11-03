@@ -107,3 +107,7 @@ To add a language:
 2. In `src/i18n/index.ts`, add it to `LANGS` (code, native name, short badge) and to `MESSAGES`. If the browser uses a different code for it, teach `detectLang` the mapping.
 3. If it uses a script the web fonts don't cover, add system fonts for it in `src/styles.css` (see the `--cjk` lines).
 4. Run `npm test` and `npm run build`.
+
+## License
+
+All rights reserved. The code is public to read, not to reuse: see [LICENSE](LICENSE).
