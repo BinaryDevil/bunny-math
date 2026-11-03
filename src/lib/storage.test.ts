@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it } from 'vitest';
-import { clean, load } from './storage';
+import { clean, load, MAX_CODES, recordRun } from './storage';
 
 const KEY = 'bunny-math:v1';
 const DEFAULT_LEVELS = { plus: 1, all: 11 };
@@ -15,7 +15,8 @@ describe('loading a save', () => {
   });
 
   it('keeps a good save as it is', () => {
-    const good = { mode: 'all', levelFor: { plus: 4, all: 13 }, explain: 'column', lang: 'fr', length: 20, sound: false, stickers: ['🦄', '🍓'], best: { 4: 3, 13: 1 } };
+    const good = { mode: 'all', levelFor: { plus: 4, all: 13 }, explain: 'column', lang: 'fr', length: 20, sound: false, stickers: ['🦄', '🍓'], best: { 4: 3, 13: 1 }, adventure: true,
+      adv: { runsPlayed: 4, wins: 2, bestMeadow: 3, jar: 90, totalEarned: 120, bestByCode: { '🍓🦄🌙🐱🌸': 60 }, seen: ['treats'] } };
     localStorage.setItem(KEY, JSON.stringify(good));
     expect(load()).toEqual(good);
   });
@@ -54,5 +55,29 @@ describe('loading a save', () => {
     a.levelFor.plus = 5;
     expect(load().stickers).toEqual([]);
     expect(load().levelFor.plus).toBe(1);
+  });
+});
+
+describe('adventure stats', () => {
+  it('start at zero, and old saves get them too', () => {
+    const s = clean({ mode: 'plus' });
+    expect(s.adventure).toBe(false);
+    expect(s.adv).toEqual({ runsPlayed: 0, wins: 0, bestMeadow: 0, jar: 0, totalEarned: 0, bestByCode: {}, seen: [] });
+  });
+
+  it('drop junk and impossible numbers', () => {
+    const s = clean({ adventure: 'yes', adv: { runsPlayed: -2, wins: 9, bestMeadow: 7, jar: 500, totalEarned: 100, bestByCode: { a: 'x', b: 3 }, seen: [1, 'paths', 'paths'] } });
+    expect(s.adventure).toBe(false);
+    expect(s.adv).toEqual({ runsPlayed: 0, wins: 0, bestMeadow: 3, jar: 100, totalEarned: 100, bestByCode: { b: 3 }, seen: ['paths'] });
+  });
+
+  it('adds up runs, keeps the best per code, and remembers only the latest codes', () => {
+    let adv = clean({}).adv;
+    adv = recordRun(adv, { code: 'A', carrots: 40, won: false, meadowsCleared: 1 });
+    adv = recordRun(adv, { code: 'A', carrots: 30, won: true, meadowsCleared: 3 });
+    expect(adv).toMatchObject({ runsPlayed: 2, wins: 1, bestMeadow: 3, jar: 70, totalEarned: 70, bestByCode: { A: 40 } });
+    for (let i = 0; i < MAX_CODES + 5; i++) adv = recordRun(adv, { code: `c${i}`, carrots: 1, won: false, meadowsCleared: 0 });
+    expect(Object.keys(adv.bestByCode)).toHaveLength(MAX_CODES);
+    expect(adv.bestByCode.A).toBeUndefined();
   });
 });

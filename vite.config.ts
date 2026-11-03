@@ -9,5 +9,6 @@ export default defineConfig({
   // Vite's default target (Safari 16.4) would leave newer syntax in that those Safaris can't parse.
   build: { target: ['es2020', 'safari15', 'ios15'] },
   // Other sessions keep copies of the repo under .claude/worktrees; don't run their tests.
-  test: { exclude: ['**/node_modules/**', '.claude/**'] },
+  // The leaderboard server in worker/ has its own tests, run from that folder.
+  test: { exclude: ['**/node_modules/**', '.claude/**', 'worker/**'] },
 });

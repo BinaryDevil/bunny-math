@@ -9,7 +9,7 @@ import { ExplainSheet } from './Explain';
 
 export type QuizResult = { questions: Question[]; firstTry: Record<string, boolean> };
 
-type Status = 'ask' | 'right' | 'wrong1' | 'wrong2';
+export type Status = 'ask' | 'right' | 'wrong1' | 'wrong2';
 type Item = { q: Question; review: boolean };
 
 const ENCOURAGE: MessageKey[] = ['quiz.encourage.0', 'quiz.encourage.1', 'quiz.encourage.2', 'quiz.encourage.3', 'quiz.encourage.4'];
@@ -20,7 +20,7 @@ const SIGN_WORDS = {
   '=': { aria: 'quiz.sameAs', short: 'quiz.same' },
   '>': { aria: 'quiz.biggerThan', short: 'quiz.bigger' },
 } as const;
-const SIGNS: CompareSign[] = ['<', '=', '>'];
+export const SIGNS: CompareSign[] = ['<', '=', '>'];
 
 export function fullFact(q: Question) {
   const { a, op, b, c } = q.fact;
@@ -28,12 +28,12 @@ export function fullFact(q: Question) {
   return `${a} ${opSymbol(op)} ${b} = ${c}`;
 }
 
-function shownAnswer(q: Question) {
+export function shownAnswer(q: Question) {
   const ans = correctAnswer(q);
   return q.kind === 'compare' ? fullFact(q) : String(ans);
 }
 
-function label(q: Question) {
+export function label(q: Question) {
   switch (q.kind) {
     case 'missing':
       return t('quiz.missing');
@@ -46,7 +46,7 @@ function label(q: Question) {
   }
 }
 
-function Prompt({ q, value, status }: { q: Question; value: string; status: Status }) {
+export function Prompt({ q, value, status }: { q: Question; value: string; status: Status }) {
   const { a, op, b, c } = q.fact;
   const slotCls = `slot ${status === 'right' ? 'right' : status === 'wrong1' || status === 'wrong2' ? 'wrong' : 'typing'}`;
   const slot = <span class={slotCls}>{value}</span>;
@@ -98,6 +98,79 @@ function Prompt({ q, value, status }: { q: Question; value: string; status: Stat
       {eq}
       {slot}
     </div>
+  );
+}
+
+/** The keypad, the answer choices or the compare signs, whichever the question needs. `hidden` answers are taken away (Adventure's magnifier). */
+export function AnswerPad({ q, input, status, wrongPicks, hidden = [], onPress, onSubmit }: {
+  q: Question;
+  input: string;
+  status: Status;
+  wrongPicks: Answer[];
+  hidden?: Answer[];
+  onPress: (k: string) => void;
+  onSubmit: (a: Answer) => void;
+}) {
+  const t = useT();
+  const answer = correctAnswer(q);
+  const usesPad = q.kind === 'type' || q.kind === 'story' || q.kind === 'missing';
+  const press = onPress;
+  const submit = onSubmit;
+  return (
+    <>
+          {usesPad && (
+            <>
+              <div class="pad">
+                {['7', '8', '9', '4', '5', '6', '1', '2', '3'].map((k) => (
+                  <button key={k} class="puffy key" onClick={() => press(k)}>
+                    {k}
+                  </button>
+                ))}
+                <button class="puffy key side" aria-label={t('quiz.delete')} onClick={() => press('back')}>
+                  ⌫
+                </button>
+                <button class="puffy key" onClick={() => press('0')}>
+                  0
+                </button>
+                <button class="puffy key side" onClick={() => press('clear')}>
+                  {t('quiz.clear')}
+                </button>
+              </div>
+              <button class="puffy berry check" disabled={!input || status !== 'ask'} onClick={() => submit(Number(input))}>
+                {t('quiz.check')}
+              </button>
+            </>
+          )}
+          {q.kind === 'choice' && (
+            <div class="choices">
+              {q.choices.map((n) => {
+                if (hidden.includes(n)) return <span key={n} class="choice taken" aria-hidden="true" />;
+                const wrong = wrongPicks.includes(n);
+                const right = status === 'right' && n === answer;
+                return (
+                  <button key={n} class={`puffy choice ${wrong ? 'picked-wrong' : ''} ${right ? 'picked-right' : ''}`} disabled={wrong || status !== 'ask'} onClick={() => submit(n)}>
+                    {n}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {q.kind === 'compare' && (
+            <div class="choices signs">
+              {SIGNS.map((s) => {
+                if (hidden.includes(s)) return <span key={s} class="choice taken" aria-hidden="true" />;
+                const wrong = wrongPicks.includes(s);
+                const right = status === 'right' && s === answer;
+                return (
+                  <button key={s} class={`puffy choice ${wrong ? 'picked-wrong' : ''} ${right ? 'picked-right' : ''}`} disabled={wrong || status !== 'ask'} onClick={() => submit(s)} aria-label={t(SIGN_WORDS[s].aria)}>
+                    {s}
+                    <small>{t(SIGN_WORDS[s].short)}</small>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+    </>
   );
 }
 
@@ -263,56 +336,7 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
         </div>
 
         <div class="pad-pane">
-          {usesPad && (
-            <>
-              <div class="pad">
-                {['7', '8', '9', '4', '5', '6', '1', '2', '3'].map((k) => (
-                  <button key={k} class="puffy key" onClick={() => press(k)}>
-                    {k}
-                  </button>
-                ))}
-                <button class="puffy key side" aria-label={t('quiz.delete')} onClick={() => press('back')}>
-                  ⌫
-                </button>
-                <button class="puffy key" onClick={() => press('0')}>
-                  0
-                </button>
-                <button class="puffy key side" onClick={() => press('clear')}>
-                  {t('quiz.clear')}
-                </button>
-              </div>
-              <button class="puffy berry check" disabled={!input || status !== 'ask'} onClick={() => submit(Number(input))}>
-                {t('quiz.check')}
-              </button>
-            </>
-          )}
-          {q.kind === 'choice' && (
-            <div class="choices">
-              {q.choices.map((n) => {
-                const wrong = wrongPicks.includes(n);
-                const right = status === 'right' && n === answer;
-                return (
-                  <button key={n} class={`puffy choice ${wrong ? 'picked-wrong' : ''} ${right ? 'picked-right' : ''}`} disabled={wrong || status !== 'ask'} onClick={() => submit(n)}>
-                    {n}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          {q.kind === 'compare' && (
-            <div class="choices signs">
-              {SIGNS.map((s) => {
-                const wrong = wrongPicks.includes(s);
-                const right = status === 'right' && s === answer;
-                return (
-                  <button key={s} class={`puffy choice ${wrong ? 'picked-wrong' : ''} ${right ? 'picked-right' : ''}`} disabled={wrong || status !== 'ask'} onClick={() => submit(s)} aria-label={t(SIGN_WORDS[s].aria)}>
-                    {s}
-                    <small>{t(SIGN_WORDS[s].short)}</small>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          <AnswerPad q={q} input={input} status={status} wrongPicks={wrongPicks} onPress={press} onSubmit={submit} />
         </div>
       </div>
 

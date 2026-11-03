@@ -1,3 +1,4 @@
+import { LEVEL_TIER, type Tier } from './carrots';
 import { makeRng, type Rng } from './rng';
 import type { Answer, CompareSign, Fact, Kind, LevelId, Mode, Op, Question, Skill, Story } from './types';
 
@@ -232,8 +233,32 @@ const BY_LEVEL: Record<LevelId, Gen> = {
   14: mixed(level5, bigTimes),
 };
 
-export function makeFact(r: Rng, level: LevelId, op: Op = r.pick(opsFor(level))): Fact {
-  return BY_LEVEL[level](r, op);
+export function makeFact(r: Rng, level: LevelId, op: Op = r.pick(opsFor(level)), hard = false): Fact {
+  if (!hard) return BY_LEVEL[level](r, op);
+  // A "hard pick": make a few and keep the toughest, so the numbers stay in the level's range.
+  let best = BY_LEVEL[level](r, op);
+  for (let i = 0; i < 5; i++) {
+    const f = BY_LEVEL[level](r, op);
+    if (toughness(f) > toughness(best)) best = f;
+  }
+  return best;
+}
+
+/** Roughly how hard a sum is: carries and borrows first, then the size of the numbers. */
+export function toughness(f: Fact): number {
+  return regroupCount(f) * 1000 + Math.max(f.a, f.b, f.c);
+}
+
+/**
+ * The difficulty tier (1–6) of a question at this level with this sign. In "All four", the adding
+ * and taking-away questions come from an add & take away level, and are as hard as that level.
+ */
+export function tierOf(level: LevelId, op: Op): Tier {
+  if (op === '+' || op === '-') {
+    const pm: Partial<Record<LevelId, Tier>> = { 11: 1, 12: 3, 13: 4, 14: 5 };
+    return pm[level] ?? LEVEL_TIER[level];
+  }
+  return LEVEL_TIER[level];
 }
 
 /* ---------- Question formats ---------- */
@@ -355,9 +380,13 @@ export type QuizOptions = {
   skills?: Skill[];
   /** Only these formats, e.g. for a printed worksheet. */
   kinds?: Kind[];
+  /** Adventure's Tricky path: the toughest sums the level makes. */
+  hard?: boolean;
+  /** The first two questions are plain sums, to ease in. Off for Adventure's later meadows. */
+  easeIn?: boolean;
 };
 
-export function generateQuiz({ level, count, seed, skills, kinds }: QuizOptions): Question[] {
+export function generateQuiz({ level, count, seed, skills, kinds, hard = false, easeIn = true }: QuizOptions): Question[] {
   const r = makeRng(seed);
   const seen = new Set<string>();
   const out: Question[] = [];
@@ -366,18 +395,21 @@ export function generateQuiz({ level, count, seed, skills, kinds }: QuizOptions)
   const ops = r.shuffle(Array.from({ length: count }, (_, i) => pattern[i % pattern.length]));
 
   for (let i = 0; i < count; i++) {
-    let fact = makeFact(r, level, ops[i]);
+    let fact = makeFact(r, level, ops[i], hard);
     for (let tries = 0; tries < 200; tries++) {
       const key = `${fact.a}${fact.op}${fact.b}`;
       const skillOk = !skills?.length || skills.includes(skillOf(fact, level));
       if (!seen.has(key) && skillOk) break;
-      fact = makeFact(r, level, skills?.length ? undefined : ops[i]);
+      fact = makeFact(r, level, skills?.length ? undefined : ops[i], hard);
     }
     seen.add(`${fact.a}${fact.op}${fact.b}`);
     // Ease in: the first two questions are always plain sums.
-    let kind = i < 2 ? 'type' : pickKind(r);
+    let kind = i < 2 && easeIn ? 'type' : pickKind(r);
     if (kinds && !kinds.includes(kind)) kind = r.pick(kinds);
-    out.push(makeQuestion(r, `q${i + 1}`, fact, skillOf(fact, level), kind));
+    const q = makeQuestion(r, `q${i + 1}`, fact, skillOf(fact, level), kind);
+    q.tier = tierOf(level, fact.op);
+    if (hard) q.hard = true;
+    out.push(q);
   }
   return out;
 }

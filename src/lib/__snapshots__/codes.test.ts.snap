@@ -1,0 +1,45 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`codes always make the same questions > level 1, seed 1234 1`] = `
+[
+  "12-8=4",
+  "11-6=5",
+  "9+6=15",
+  "6+5=11",
+  "10-9=1",
+  "3+5=8",
+]
+`;
+
+exports[`codes always make the same questions > level 6, seed 99 1`] = `
+[
+  "802-226=576",
+  "291+439=730",
+  "505-329=176",
+  "294+459=753",
+  "278+562=840",
+  "305-167=138",
+]
+`;
+
+exports[`codes always make the same questions > level 11, seed 5 1`] = `
+[
+  "6+3=9",
+  "14-4=10",
+  "70÷10=7",
+  "5×4=20",
+  "8×10=80",
+  "30÷10=3",
+]
+`;
+
+exports[`codes always make the same questions > level 14, seed 777 1`] = `
+[
+  "641+319=960",
+  "74÷2=37",
+  "32×6=192",
+  "786-173=613",
+  "13×5=65",
+  "64÷2=32",
+]
+`;
