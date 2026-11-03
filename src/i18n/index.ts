@@ -89,7 +89,12 @@ function interpolate(msg: string, params?: Params) {
 
 /** The message for `key` in the current language, with `{params}` filled in. */
 export function t(key: MessageKey, params?: Params): string {
-  let msg = MESSAGES[current][key] ?? en[key];
+  return format(MESSAGES[current][key] ?? en[key], params);
+}
+
+/** Fills in `{params}` and applies the current language's spacing rules. For messages kept outside MESSAGES. */
+export function format(message: string, params?: Params): string {
+  let msg = message;
   // French puts a (non-breaking) space before ! ? : ; so the sign never wraps onto its own line.
   if (current === 'fr') msg = msg.replace(/ ([!?:;])/g, ' $1');
   const out = interpolate(msg, params);

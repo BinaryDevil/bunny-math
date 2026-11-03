@@ -14,6 +14,11 @@ There are no accounts. Progress is saved on the device. The only thing that ever
 - Missed questions come back at the end; results show stars, skills, and a sticker reward
 - Printable worksheets with an answer key (🖨️ on the home screen)
 
+**Worksheet pages** (for search engines, and for parents who arrive from one)
+- [bunnyland.app/worksheets/](https://bunnyland.app/worksheets/): a plain page per level with a printable sheet and its answers, in all 9 languages (`/zh-cn/worksheets/`, `/fr/worksheets/`, …). No JavaScript needed.
+- "Practice online" opens the app at that level, in that language (`?code=…&lang=fr`).
+- Made by `npm run build`, together with `sitemap.xml`. Page addresses (`SLUGS` in `src/pages/worksheets.ts`) must never change, because search results link to them.
+
 **Adventure** (meet Rascal, Bunny's mischievous twin)
 - Cross 3 meadows of questions with 3 hearts, then beat Rascal in a showdown at the end of each one
 - Right answers win carrots: harder levels and harder sums pay more
@@ -74,8 +79,11 @@ The build uses relative paths, so it also works under a sub-path like `bunnyland
 - `src/lib/leaderboard.ts`: talks to the leaderboard server, with an offline queue
 - `src/lib/names.ts`: the word lists for leaderboard names, shared with the server. Only add words to the end.
 - `src/lib/storage.ts`: everything saved on the device
+- `src/lib/worksheet.ts`: the questions on a printed sheet, shared by the app and the worksheet pages
+- `src/pages/worksheets.ts`: the static worksheet pages and the sitemap, written into `dist/` by a small plugin in `vite.config.ts`
 - `src/components/`: the screens (home, quiz, results, adventure, leaderboard, sticker book, worksheet) and the two bunnies (`Bunny.tsx`, `Rascal.tsx`)
-- `src/i18n/`: translations, one file per language (see below)
+- `src/i18n/`: translations, one file per language, plus `pages.ts` for the worksheet pages (see below)
+- `public/`: copied into the site as is: icons, `og.png`, `robots.txt`, `manifest.webmanifest` (for adding the app to a home screen)
 - `src/styles.css`: colors, fonts, and layouts for tablets and phones
 - `worker/`: the leaderboard server (Cloudflare Worker + D1 database)
 - `e2e/`: browser tests that screenshot every screen
@@ -91,6 +99,7 @@ All the words the app shows, including the "Show me how" steps and the printed w
 - Numbers always use the digits 0–9, and the signs + − × ÷ stay the same in every language.
 - The choice is saved on the device. Until a language is picked, it follows `navigator.languages` (zh-TW, zh-HK and zh-Hant → 繁體中文, other zh → 简体中文, pt-BR and pt-PT → Português), falling back to English.
 - The link preview tags in `index.html` stay in English, since link previews don't run the app.
+- The words on the worksheet pages are in `src/i18n/pages.ts`, kept apart so the app doesn't download them. Same rules: every language has the same keys and `{placeholders}` as English (checked by `npm test`).
 
 To add a language:
 

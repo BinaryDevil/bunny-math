@@ -2,6 +2,7 @@ import type { Messages } from './en';
 
 export const zhCN: Messages = {
   'app.name': '小兔数学',
+  'app.title': '小兔数学 – 小学数学练习',
   'app.nameA': '小兔',
   'app.nameB': '数学',
   'lang.label': '语言',
