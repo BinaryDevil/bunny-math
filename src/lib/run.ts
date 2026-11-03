@@ -40,6 +40,7 @@ export function depthFor(runsPlayed: number, wins: number): number {
 }
 
 type Item = { q: Question; comeback: boolean };
+export type Missed = { skill: Skill; level: LevelId };
 
 export type Stage =
   | { kind: 'meadow'; meadow: number; path: Path; items: Item[]; idx: number }
@@ -68,8 +69,8 @@ export type Run = {
   lostThisMeadow: number;
   meadowsCleared: number;
   showdownsWon: number;
-  /** Skills of questions missed twice, for "Practice …" at the end. */
-  missed: Skill[];
+  /** Questions missed twice (their skill, and the level they came from), for "Practice …" at the end. */
+  missed: Missed[];
 };
 
 /* ---------- Seeds ---------- */
@@ -249,7 +250,7 @@ export function answer(run: Run, outcome: Outcome): Run {
     r.hearts = run.hearts - 1;
     r.lostThisMeadow = run.lostThisMeadow + 1;
   }
-  if (outcome === 'fail' && !cur.comeback) r.missed = [...run.missed, cur.q.skill];
+  if (outcome === 'fail' && !cur.comeback) r.missed = [...run.missed, { skill: cur.q.skill, level: levelAsked(run) }];
   if (r.hearts <= 0) return { ...r, hearts: 0, stage: { kind: 'lost' } };
 
   const s = run.stage;
@@ -263,8 +264,7 @@ export function answer(run: Run, outcome: Outcome): Run {
   if (s.kind === 'showdown') {
     const rascal = gain.hit ? s.rascal - 1 : s.rascal;
     if (rascal <= 0) {
-      const perfect = r.lostThisMeadow === 0 ? perfectBonus(r, s.meadow, s.path) : 0;
-      r = { ...r, carrots: r.carrots + perfect, meadowsCleared: r.meadowsCleared + 1, showdownsWon: r.showdownsWon + 1 };
+      r = { ...r, carrots: r.carrots + perfectEarned(r), meadowsCleared: r.meadowsCleared + 1, showdownsWon: r.showdownsWon + 1 };
       return afterShowdown(r, s.meadow);
     }
     let pool = s.pool;
@@ -274,10 +274,40 @@ export function answer(run: Run, outcome: Outcome): Run {
   return r;
 }
 
-/** The bonus for a meadow with no hearts lost, for showing on screen. */
+/** The bonus for a meadow with no hearts lost. */
 export function perfectBonus(run: Run, meadow: number, path: Path): number {
   const spec = meadowSpec(run.level, meadow, path);
   return CARROTS.perfectMeadow(worth(LEVEL_TIER[spec.level], spec.hard));
+}
+
+/**
+ * The perfect-meadow bonus that beating Rascal now would earn: the run must be in a showdown
+ * (the winning hit never costs a heart, so this is the same before and after it).
+ * Read it before the answer: once the next meadow starts, its hearts-lost count starts again.
+ */
+export function perfectEarned(run: Run): number {
+  const s = run.stage;
+  if (s.kind !== 'showdown' || run.lostThisMeadow > 0) return 0;
+  return perfectBonus(run, s.meadow, s.path);
+}
+
+/** The level the current question comes from: its meadow's, or a step up in a showdown. */
+function levelAsked(run: Run): LevelId {
+  const s = run.stage;
+  if (s.kind === 'showdown') return showdownSpec(run.level, s.meadow, s.path).level;
+  if (s.kind === 'meadow') return meadowSpec(run.level, s.meadow, s.path).level;
+  return run.level;
+}
+
+/**
+ * What "Practice …" at the end asks: the skills missed at one level (the first miss's), at that
+ * level. A skill only means something at its own level ("carrying" never comes up in level 1).
+ */
+export function practiceFor(run: Run): { level: LevelId; skills: Skill[] } | null {
+  const first = run.missed[0];
+  if (!first) return null;
+  const skills = [...new Set(run.missed.filter((m) => m.level === first.level).map((m) => m.skill))];
+  return { level: first.level, skills };
 }
 
 /* ---------- Treats and paths ---------- */

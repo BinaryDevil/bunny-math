@@ -5,7 +5,7 @@ import { MEADOWS } from '../lib/carrots';
 import { correctAnswer } from '../lib/generator';
 import type { Posted } from '../lib/leaderboard';
 import {
-  answer, BAG_SIZE, canUse, choosePath, current, isOver, perfectBonus, pickTreat, preview, startRun, useTreat,
+  answer, BAG_SIZE, canUse, choosePath, current, isOver, perfectEarned, pickTreat, practiceFor, preview, startRun, useTreat,
   type Gain, type Outcome, type Run, type Treat,
 } from '../lib/run';
 import { sounds } from '../lib/sound';
@@ -51,7 +51,7 @@ type Props = {
   onHome: () => void;
   onRematch: () => void;
   onNew: () => void;
-  onPractice: (skills: Skill[]) => void;
+  onPractice: (level: LevelId, skills: Skill[]) => void;
 };
 
 type Banner = { kind: 'showdown'; meadow: number; rascal: number } | { kind: 'meadowWon'; perfect: number };
@@ -62,7 +62,8 @@ export function Adventure(props: Props) {
   const [intro, setIntro] = useState(true);
   const [banner, setBanner] = useState<Banner | null>(null);
   const [posted, setPosted] = useState<Posted | null | 'waiting'>('waiting');
-  const [quitting, setQuitting] = useState(false);
+  /** The stop dialog is open; `pending` is an answer whose result is on screen but not yet applied. */
+  const [quitting, setQuitting] = useState<{ pending: Outcome | null } | null>(null);
   // The best and the jar from before this run (the app updates them once it ends).
   const [start] = useState(() => ({ best: props.best, jar: props.jar }));
 
@@ -73,14 +74,15 @@ export function Adventure(props: Props) {
       sounds.pop();
       setBanner({ kind: 'showdown', meadow: after.stage.meadow, rascal: after.stage.rascal });
     } else if (before.stage.kind === 'showdown' && after.stage.kind !== 'showdown' && after.stage.kind !== 'lost') {
-      const s = before.stage;
-      setBanner({ kind: 'meadowWon', perfect: after.lostThisMeadow === 0 ? perfectBonus(before, s.meadow, s.path) : 0 });
+      setBanner({ kind: 'meadowWon', perfect: perfectEarned(before) });
     }
     setRun(after);
   }
 
-  function end(r: Run) {
-    setRun(r);
+  /** Stops the run. An answer already shown on screen (its carrots, or a lost heart) still counts. */
+  function stop(pending: Outcome | null) {
+    const r = pending ? answer(run, pending) : run;
+    setRun(isOver(r) ? r : { ...r, stage: { kind: 'lost' } });
   }
 
   // Report the run once, when it ends.
@@ -104,7 +106,7 @@ export function Adventure(props: Props) {
   else if (s.kind === 'doors') body = <Doors onPick={(p) => { sounds.tap(); setRun(choosePath(run, p)); }} />;
   else {
     const cur = current(run);
-    body = cur ? <Ask key={cur.key} run={run} onAnswer={apply} onTreat={(tr) => setRun(useTreat(run, tr))} onQuit={() => setQuitting(true)} /> : null;
+    body = cur ? <Ask key={cur.key} run={run} onAnswer={apply} onTreat={(tr) => setRun(useTreat(run, tr))} onQuit={(pending) => setQuitting({ pending })} /> : null;
   }
 
   return (
@@ -118,10 +120,10 @@ export function Adventure(props: Props) {
             <h2>{t('adv.stopTitle')}</h2>
             <p>{t('adv.stopBody')}</p>
             <div class="dialog-actions">
-              <button class="puffy" onClick={() => { setQuitting(false); end({ ...run, stage: { kind: 'lost' } }); }}>
+              <button class="puffy" onClick={() => { stop(quitting.pending); setQuitting(null); }}>
                 {t('adv.stopYes')}
               </button>
-              <button class="puffy berry" onClick={() => setQuitting(false)} autoFocus>
+              <button class="puffy berry" onClick={() => setQuitting(null)} autoFocus>
                 {t('quiz.keepGoing')}
               </button>
             </div>
@@ -189,7 +191,7 @@ function MeadowMap({ meadow, showdown }: { meadow: number; showdown: boolean }) 
 
 /* ---------- One question ---------- */
 
-function Ask({ run, onAnswer, onTreat, onQuit }: { run: Run; onAnswer: (o: Outcome) => void; onTreat: (t: Treat) => void; onQuit: () => void }) {
+function Ask({ run, onAnswer, onTreat, onQuit }: { run: Run; onAnswer: (o: Outcome) => void; onTreat: (t: Treat) => void; onQuit: (pending: Outcome | null) => void }) {
   const cur = current(run)!;
   const { q, comeback, showdown } = cur;
   const [input, setInput] = useState('');
@@ -311,7 +313,7 @@ function Ask({ run, onAnswer, onTreat, onQuit }: { run: Run; onAnswer: (o: Outco
   return (
     <section class={`screen adv ${showdown ? 'showdown' : ''}`}>
       <header class="topbar adv-hud">
-        <button class="puffy icon-btn" aria-label={t('adv.stop')} onClick={onQuit}>
+        <button class="puffy icon-btn" aria-label={t('adv.stop')} onClick={() => onQuit(done?.outcome ?? null)}>
           ✕
         </button>
         <Hearts n={hearts} />
@@ -499,7 +501,7 @@ function Doors({ onPick }: { onPick: (p: 'sunny' | 'tricky') => void }) {
 
 function End({ run, code, best, jar, posted, onHome, onRematch, onNew, onPractice }: Props & { run: Run; posted: Posted | null | 'waiting' }) {
   const won = run.stage.kind === 'won';
-  const skills = [...new Set(run.missed)];
+  const practice = practiceFor(run);
   const rank = posted && posted !== 'waiting' ? posted : null;
   const movedUp = rank && rank.was !== undefined && rank.rank < rank.was;
   return (
@@ -527,9 +529,9 @@ function End({ run, code, best, jar, posted, onHome, onRematch, onNew, onPractic
         {best > 0 && <p class="adv-text small">{t('adv.end.best', { n: Math.max(best, run.carrots) })}</p>}
         <ShareCode code={code} text={t('share.advText', { n: run.carrots, code })} />
         <div class="res-actions">
-          {!won && skills.length > 0 && (
-            <button class="puffy butter" onClick={() => onPractice(skills)}>
-              {t('adv.end.practice', { skill: t(`skill.${skills[0]}`) })}
+          {!won && practice && (
+            <button class="puffy butter" onClick={() => onPractice(practice.level, practice.skills)}>
+              {t('adv.end.practice', { skill: t(`skill.${practice.skills[0]}`) })}
             </button>
           )}
           <button class="puffy berry" onClick={onRematch}>

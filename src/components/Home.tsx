@@ -28,6 +28,8 @@ type Props = {
   onCode: (c: ShareCode, text: string) => void;
   /** A code from a link, waiting to be played. */
   pendingCode?: string;
+  /** The code box was closed without playing: the link's code is used up, so it doesn't open again. */
+  onCodeClosed: () => void;
 };
 
 /** The big Adventure switch. Turning it on morphs Bunny into Rascal and the app into night. */
@@ -56,7 +58,7 @@ export function SoundButton({ on, onToggle }: { on: boolean; onToggle: () => voi
   );
 }
 
-export function Home({ saved, mode, level, lang, onLang, onLevel, onMode, onChange, onStart, onStickers, onPrint, onBoard, onCode, pendingCode }: Props) {
+export function Home({ saved, mode, level, lang, onLang, onLevel, onMode, onChange, onStart, onStickers, onPrint, onBoard, onCode, pendingCode, onCodeClosed }: Props) {
   const t = useT();
   const levels = levelsFor(mode);
   const adv = saved.adventure;
@@ -154,7 +156,7 @@ export function Home({ saved, mode, level, lang, onLang, onLevel, onMode, onChan
           </button>
         </div>
       </div>
-      {coding && <CodeEntry initial={pendingCode} onClose={() => setCoding(false)} onPlay={(c, text) => { setCoding(false); onCode(c, text); }} />}
+      {coding && <CodeEntry initial={pendingCode} onClose={() => { setCoding(false); onCodeClosed(); }} onPlay={(c, text) => { setCoding(false); onCode(c, text); }} />}
     </section>
   );
 }

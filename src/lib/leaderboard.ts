@@ -42,6 +42,19 @@ export function savedPlayer(): Player | null {
   return p && typeof p.id === 'string' && typeof p.secret === 'string' && isValidName(p.name) ? p : null;
 }
 
+/**
+ * The server doesn't know this player (say, its database was replaced): drop it, so the next
+ * call makes a new one. Only if it's still the saved one, in case another tab already replaced it.
+ */
+function forget(player: Player) {
+  if (savedPlayer()?.id !== player.id) return;
+  try {
+    localStorage.removeItem(PLAYER_KEY);
+  } catch {
+    // Storage blocked: nothing saved to drop.
+  }
+}
+
 async function call<T>(path: string, init: RequestInit & { secret?: string } = {}): Promise<{ status: number; body: T | null }> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (init.secret) headers.Authorization = `Bearer ${init.secret}`;
@@ -97,7 +110,7 @@ export async function submitRun(run: { code: string; level: LevelId; carrots: nu
 const queued = () => (read<QueuedRun[]>(QUEUE_KEY) ?? []).filter((r) => r && typeof r.runId === 'string').slice(-40);
 
 /** Sends waiting runs. Safe to call any time (for example when the app opens). */
-export async function flush(): Promise<Posted | null> {
+export async function flush(retried = false): Promise<Posted | null> {
   // Nothing waiting: don't make a player just for opening the app.
   if (!leaderboardOn() || !queued().length) return null;
   const player = await ensurePlayer();
@@ -110,6 +123,11 @@ export async function flush(): Promise<Posted | null> {
         secret: player.secret,
         body: JSON.stringify({ ...run, playerId: player.id }),
       });
+      // The server doesn't know this player: keep the runs, and send them as a new player (once).
+      if (status === 401) {
+        forget(player);
+        return retried ? null : flush(true);
+      }
       // Sent, or turned away for good (a bad or repeated run): either way it leaves the queue.
       if (status === 200 && body) last = body;
       if (status === 429 || status >= 500) break;
@@ -138,11 +156,16 @@ export async function fetchBoard(): Promise<Board | null> {
 export type RenameResult = 'ok' | 'taken' | 'offline';
 
 /** Changes the player's name. Names are unique by their two words, so the server may say it's taken. */
-export async function rename(name: PlayerName): Promise<RenameResult> {
+export async function rename(name: PlayerName, retried = false): Promise<RenameResult> {
   const player = await ensurePlayer();
   if (!player) return 'offline';
   try {
     const { status } = await call(`/players/${encodeURIComponent(player.id)}/name`, { method: 'PUT', secret: player.secret, body: JSON.stringify(name) });
+    // The server doesn't know this player: make a new one and name that instead (once).
+    if (status === 401) {
+      forget(player);
+      return retried ? 'offline' : rename(name, true);
+    }
     if (status === 409) return 'taken';
     if (status !== 200) return 'offline';
     write(PLAYER_KEY, { ...player, name });

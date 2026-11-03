@@ -17,6 +17,13 @@ export const NAME_ADJECTIVES = [
   'Fancy', 'Frosty', 'Glowing', 'Golden', 'Hoppy', 'Jumpy', 'Merry', 'Misty',
   'Peppy', 'Perky', 'Plucky', 'Puffy', 'Quirky', 'Rosy', 'Silly', 'Snappy',
   'Spotty', 'Starry', 'Swirly', 'Tiny', 'Twinkly', 'Wiggly', 'Witty', 'Zesty',
+  'Bubbly', 'Busy', 'Calm', 'Chirpy', 'Cozy', 'Crunchy', 'Cuddly', 'Daring',
+  'Dapper', 'Dotty', 'Eager', 'Fearless', 'Flappy', 'Friendly', 'Bright', 'Gentle',
+  'Gleaming', 'Glittery', 'Grinning', 'Humming', 'Jazzy', 'Kind', 'Lively', 'Magical',
+  'Mellow', 'Minty', 'Nifty', 'Noble', 'Peachy', 'Purple', 'Royal', 'Sandy',
+  'Shiny', 'Skippy', 'Smiley', 'Snowy', 'Spiffy', 'Stripy', 'Super', 'Swift',
+  'Tidy', 'Toasty', 'Twirly', 'Velvet', 'Wavy', 'Whizzy', 'Wise', 'Zany',
+  'Zooming', 'Chilly', 'Fuzzy', 'Rainbow',
 ] as const;
 
 export const NAME_NOUNS = [
@@ -26,6 +33,13 @@ export const NAME_NOUNS = [
   'Dragon', 'Feather', 'Gecko', 'Jellybean', 'Kiwi', 'Koala', 'Lemon', 'Llama',
   'Mango', 'Marshmallow', 'Meadow', 'Moonbeam', 'Nugget', 'Panda', 'Peanut', 'Penguin',
   'Pretzel', 'Puffin', 'Pumpkin', 'Raindrop', 'Sprout', 'Star', 'Tulip', 'Walrus',
+  'Badger', 'Beetle', 'Bluebird', 'Butterfly', 'Cherry', 'Chipmunk', 'Clover', 'Coconut',
+  'Crayon', 'Cricket', 'Crumpet', 'Dolphin', 'Duckling', 'Firefly', 'Flamingo', 'Gumdrop',
+  'Hamster', 'Hedgehog', 'Honeybee', 'Kitten', 'Ladybug', 'Lantern', 'Lollipop', 'Marble',
+  'Meerkat', 'Mitten', 'Moose', 'Narwhal', 'Octopus', 'Owl', 'Parrot', 'Peach',
+  'Pinecone', 'Popcorn', 'Puddle', 'Puppy', 'Raccoon', 'Robin', 'Seashell', 'Snowflake',
+  'Sparrow', 'Squirrel', 'Starfish', 'Sunflower', 'Teapot', 'Toffee', 'Turtle', 'Unicorn',
+  'Wombat', 'Zebra', 'Hippo', 'Pudding',
 ] as const;
 
 export type PlayerName = { emoji: string; adj: string; noun: string };

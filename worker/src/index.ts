@@ -2,7 +2,7 @@
  * Bunny Math leaderboard server: a Cloudflare Worker over a D1 database.
  * This file is the HTTP side (routing, auth, validation, CORS); db.ts holds the SQL.
  */
-import { isValidName, nameText, randomName, type PlayerName } from '../../src/lib/names';
+import { isValidName, NAME_ADJECTIVES, NAME_NOUNS, nameText, randomName, type PlayerName } from '../../src/lib/names';
 import { LEVEL_TIER, maxRunCarrots } from '../../src/lib/carrots';
 import type { LevelId } from '../../src/lib/types';
 import * as db from './db';
@@ -13,7 +13,7 @@ export interface Env {
 }
 
 const DEFAULT_ORIGINS = 'https://binarydevil.github.io,http://localhost:5173,http://127.0.0.1:5173';
-const NAME_TRIES = 50;
+const NAME_TRIES = 10;
 const MAX_CODE_LENGTH = 32;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const LEVELS = new Set(Object.keys(LEVEL_TIER).map(Number));
@@ -68,10 +68,26 @@ async function register(request: Request, env: Env, now: number): Promise<Respon
   const id = crypto.randomUUID();
   const secret = randomSecret();
   const secretHash = await sha256(secret);
+  const made = (name: PlayerName) => json(201, { id, secret, name, display: nameText(name) });
+  // Random names first: cheap, and almost always free while the board has room.
   for (let i = 0; i < NAME_TRIES; i++) {
     const name = randomName(randomFraction);
-    if (await db.insertPlayer(env.DB, { id, secretHash, name, now })) {
-      return json(201, { id, secret, name, display: nameText(name) });
+    if (await db.insertPlayer(env.DB, { id, secretHash, name, now })) return made(name);
+  }
+  // A crowded board: go through the adjectives (from a random one) for a noun nobody has with it,
+  // so a new player gets a name as long as any pair is still free.
+  const start = Math.floor(randomFraction() * NAME_ADJECTIVES.length);
+  const emoji = randomName(randomFraction).emoji;
+  for (let i = 0; i < NAME_ADJECTIVES.length; i++) {
+    const adj = NAME_ADJECTIVES[(start + i) % NAME_ADJECTIVES.length];
+    const taken = await db.takenNouns(env.DB, adj);
+    const free = NAME_NOUNS.filter((n) => !taken.has(n));
+    // Another player may grab the same pair at the same moment: then try this adjective's next free noun.
+    const from = Math.floor(randomFraction() * free.length);
+    for (let j = 0; j < Math.min(free.length, 3); j++) {
+      const noun = free[(from + j) % free.length];
+      const name = { emoji, adj, noun };
+      if (await db.insertPlayer(env.DB, { id, secretHash, name, now })) return made(name);
     }
   }
   return json(503, { error: 'no_free_name' });

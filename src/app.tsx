@@ -167,6 +167,7 @@ export function App() {
             onBoard={() => setScreen({ name: 'leaderboard' })}
             onCode={playCode}
             pendingCode={pendingCode}
+            onCodeClosed={() => setPendingCode(undefined)}
             onMode={() => setScreen({ name: 'mode' })}
             onStickers={() => setScreen({ name: 'stickers' })}
             onPrint={() => setScreen({ name: 'print' })}
@@ -208,7 +209,7 @@ export function App() {
             onHome={() => setScreen({ name: 'home' })}
             onRematch={() => startAdventure({ level: sc.level, seed: sc.seed, depth: sc.depth, fromCode: sc.fromCode })}
             onNew={() => startAdventure()}
-            onPractice={(skills) => startQuiz({ level: sc.level, skills, count: 10 })}
+            onPractice={(lvl, skills) => startQuiz({ level: lvl, skills, count: 10 })}
           />
         );
       }

@@ -34,6 +34,12 @@ export async function insertPlayer(
   return res.meta.changes === 1;
 }
 
+/** The nouns already taken with this adjective. Reads only those rows (the players_name index). */
+export async function takenNouns(db: D1Database, adj: string): Promise<Set<string>> {
+  const { results } = await db.prepare('SELECT noun FROM players WHERE adj = ?1').bind(adj).all<{ noun: string }>();
+  return new Set(results.map((r) => r.noun));
+}
+
 /** True if a player with this id has this secret hash. */
 export async function checkSecret(db: D1Database, id: string, secretHash: string): Promise<boolean> {
   const row = await db

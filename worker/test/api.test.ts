@@ -46,6 +46,27 @@ describe('POST /players', () => {
     await expect(insert.run()).rejects.toThrow(/UNIQUE/);
   });
 
+  it('finds the last free name on a full board', async () => {
+    // Take every adj + noun pair but one.
+    const lastAdj = NAME_ADJECTIVES[37];
+    const lastNoun = NAME_NOUNS[61];
+    let i = 0;
+    await env.DB.batch(
+      NAME_ADJECTIVES.map((adj) =>
+        env.DB.prepare(
+          `INSERT INTO players (id, secret_hash, emoji, adj, noun, created_at, updated_at) VALUES ${NAME_NOUNS.filter(
+            (noun) => adj !== lastAdj || noun !== lastNoun,
+          )
+            .map((noun) => `('id${i++}', 'h', '🐰', '${adj}', '${noun}', 0, 0)`)
+            .join(',')}`,
+        ),
+      ),
+    );
+    const res = await call('POST', '/players', { body: {} });
+    expect(res.status).toBe(201);
+    expect(res.json.name).toMatchObject({ adj: lastAdj, noun: lastNoun });
+  });
+
   it('answers 503 when no free name turns up', async () => {
     // Take every adj + noun pair, one statement per adjective.
     let i = 0;

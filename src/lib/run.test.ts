@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CARROTS, maxRunCarrots, START_HEARTS, worth } from './carrots';
 import {
-  answer, BAG_SIZE, canUse, choosePath, current, depthFor, featuresFor, meadowSpec, pickTreat,
-  preview, showdownSpec, startRun, useTreat, type Outcome, type Run,
+  answer, BAG_SIZE, canUse, choosePath, current, depthFor, featuresFor, meadowSpec, perfectBonus, perfectEarned,
+  pickTreat, practiceFor, preview, showdownSpec, startRun, useTreat, type Outcome, type Run,
 } from './run';
 
 /** Answers until the stage kind changes (or `limit` answers), always with the same outcome. */
@@ -83,7 +83,7 @@ describe('a run', () => {
     const first = current(run)!.q;
     run = answer(run, 'fail');
     expect(run.hearts).toBe(2);
-    expect(run.missed).toEqual([first.skill]);
+    expect(run.missed).toEqual([{ skill: first.skill, level: 1 }]);
     for (let i = 0; i < 4; i++) run = answer(run, 'first');
     const back = current(run)!;
     expect(back.comeback).toBe(true);
@@ -93,6 +93,39 @@ describe('a run', () => {
     const after = answer(run, 'fail');
     expect(after.hearts).toBe(2);
     expect(after.stage.kind).toBe('showdown');
+  });
+
+  it('pays the perfect-meadow bonus only when no heart was lost, and says so before the next meadow resets it', () => {
+    // Depth 0: winning a showdown goes straight into the next meadow, which starts its count again.
+    const lost = playUntilStageChanges(answer(startRun({ level: 2, seed: 9, depth: 0 }), 'fail'), 'first');
+    expect(lost.stage.kind).toBe('showdown');
+    let sd = lost;
+    while (sd.stage.kind === 'showdown' && sd.stage.rascal > 1) sd = answer(sd, 'first');
+    expect(perfectEarned(sd)).toBe(0);
+    const after = answer(sd, 'first');
+    expect(after.stage).toMatchObject({ kind: 'meadow', meadow: 1 });
+    expect(after.lostThisMeadow).toBe(0); // the reset that fooled the banner
+    expect(after.carrots - sd.carrots).toBe(preview(sd, 'first').carrots);
+
+    let clean = playUntilStageChanges(startRun({ level: 2, seed: 9, depth: 0 }), 'first');
+    while (clean.stage.kind === 'showdown' && clean.stage.rascal > 1) clean = answer(clean, 'first');
+    const bonus = perfectBonus(clean, 0, 'sunny');
+    expect(perfectEarned(clean)).toBe(bonus);
+    expect(answer(clean, 'first').carrots - clean.carrots).toBe(preview(clean, 'first').carrots + bonus);
+  });
+
+  it('practices missed skills at the level they were missed at', () => {
+    expect(practiceFor(startRun({ level: 1, seed: 1, depth: 0 }))).toBeNull();
+    // Meadow 3 and every showdown ask a level up, so their misses practice that level.
+    let run = playUntilStageChanges(startRun({ level: 1, seed: 3, depth: 0 }), 'first');
+    expect(run.stage.kind).toBe('showdown');
+    const missed = current(run)!.q.skill;
+    run = answer(run, 'fail');
+    expect(run.missed).toEqual([{ skill: missed, level: showdownSpec(1, 0, 'sunny').level }]);
+    expect(practiceFor(run)).toEqual({ level: 2, skills: [missed] });
+    // Only skills from that one level go in, since one quiz has one level.
+    const mixed = { ...run, missed: [...run.missed, { skill: 'add20' as const, level: 1 as const }, { skill: missed, level: 2 as const }] };
+    expect(practiceFor(mixed)).toEqual({ level: 2, skills: [missed] });
   });
 
   it('ends when the hearts run out, and keeps the carrots', () => {
