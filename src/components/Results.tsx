@@ -6,6 +6,7 @@ import type { Question, Skill } from '../lib/types';
 import { Bunny, Star } from './Bunny';
 import { ExplainSheet } from './Explain';
 import type { QuizResult } from './Quiz';
+import { useLanguage } from './Language';
 
 export function starsFor(right: number, total: number) {
   const p = right / total;
@@ -25,6 +26,7 @@ type Props = {
 };
 
 export function Results({ result, sticker, canLevelUp, onHome, onAgain, onPractice, onNextLevel }: Props) {
+  const { t } = useLanguage();
   const { questions, firstTry } = result;
   const right = questions.filter((q) => firstTry[q.id]).length;
   const stars = starsFor(right, questions.length);
@@ -47,34 +49,34 @@ export function Results({ result, sticker, canLevelUp, onHome, onAgain, onPracti
   return (
     <section class="screen">
       <header class="topbar">
-        <button class="puffy icon-btn" aria-label="Home" onClick={onHome}>
+        <button class="puffy icon-btn" aria-label={t("Home")} onClick={onHome}>
           🏠
         </button>
       </header>
       <div class="res-body">
         <div class="res-hero">
-          <div class="stars" aria-label={`${stars} of 3 stars`}>
+          <div class="stars" aria-label={t('{n} of 3 stars', { n: stars })}>
             {[1, 2, 3].map((n) => (
               <Star key={n} empty={n > stars} />
             ))}
           </div>
-          <p class="cheer">{CHEER[stars]}</p>
+          <p class="cheer">{t(CHEER[stars])}</p>
           <p class="score">
-            {right} out of {questions.length}
+            {t('{right} out of {total}', { right, total: questions.length })}
           </p>
           <Bunny mood="cheer" />
         </div>
         <div class="res-side">
           <div class="panel">
             <h2>
-              Your answers <small>Tap one to see how</small>
+              {t("Your answers")} <small>{t("Tap one to see how")}</small>
             </h2>
             <div class="qgrid">
               {questions.map((q, i) => (
                 <button
                   key={q.id}
                   class={firstTry[q.id] ? '' : 'x'}
-                  aria-label={`Question ${i + 1}: ${firstTry[q.id] ? 'right' : 'needs practice'}`}
+                  aria-label={t('Question {n}: {status}', { n: i + 1, status: t(firstTry[q.id] ? 'right' : 'needs practice') })}
                   onClick={() => {
                     sounds.tap();
                     setLooking(q);
@@ -90,11 +92,11 @@ export function Results({ result, sticker, canLevelUp, onHome, onAgain, onPracti
             <ul class="skills">
               {[...bySkill].map(([skill, s]) => (
                 <li key={skill}>
-                  {SKILL_LABELS[skill].icon} {SKILL_LABELS[skill].label}
+                  {SKILL_LABELS[skill].icon} {t(SKILL_LABELS[skill].label)}
                   <span class="skill-count">
                     {s.right}/{s.total}
                   </span>
-                  {s.right / s.total >= 0.8 ? <span class="chip great">⭐ Super!</span> : <span class="chip grow">🌱 Practice more</span>}
+                  {s.right / s.total >= 0.8 ? <span class="chip great">{t("⭐ Super!")}</span> : <span class="chip grow">{t("🌱 Practice more")}</span>}
                 </li>
               ))}
             </ul>
@@ -103,24 +105,24 @@ export function Results({ result, sticker, canLevelUp, onHome, onAgain, onPracti
             <div class="panel sticker-row">
               <div class="sticker">{sticker}</div>
               <div>
-                <b style={{ fontSize: '20px' }}>New sticker!</b>
+                <b style={{ fontSize: '20px' }}>{t("New sticker!")}</b>
                 <br />
-                <span style={{ color: 'var(--ink-soft)', fontWeight: 600 }}>It's in your sticker book now.</span>
+                <span style={{ color: 'var(--ink-soft)', fontWeight: 600 }}>{t("It's in your sticker book now.")}</span>
               </div>
             </div>
           )}
           <div class="res-actions">
             {missed > 0 ? (
               <button class="puffy butter" onClick={() => onPractice(missedSkills)}>
-                🌱 Practice more
+                {t("🌱 Practice more")}
               </button>
             ) : canLevelUp ? (
               <button class="puffy butter" onClick={onNextLevel}>
-                Try the next level ▶
+                {t("Try the next level ▶")}
               </button>
             ) : null}
             <button class="puffy berry" onClick={onAgain}>
-              Play again
+              {t("Play again")}
             </button>
           </div>
         </div>

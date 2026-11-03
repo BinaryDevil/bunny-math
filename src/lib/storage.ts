@@ -1,4 +1,5 @@
 import type { LevelId, Mode } from './types';
+import { normalizeLanguage, type Language } from './i18n';
 
 /** How "Show me how" explains a sum: base-ten blocks, or the column method (竖式). */
 export type ExplainStyle = 'blocks' | 'column';
@@ -7,6 +8,7 @@ export type ExplainStyle = 'blocks' | 'column';
 export type Saved = {
   /** Unset until the child picks a mode for the first time. */
   mode?: Mode;
+  language: Language;
   /** The level picked in each mode. */
   levelFor: Record<Mode, LevelId>;
   explain: ExplainStyle;
@@ -18,14 +20,14 @@ export type Saved = {
 };
 
 const KEY = 'bunny-math:v1';
-const DEFAULTS: Saved = { levelFor: { plus: 1, all: 11 }, explain: 'blocks', length: 15, sound: true, stickers: [], best: {} };
+const DEFAULTS: Saved = { language: 'en', levelFor: { plus: 1, all: 11 }, explain: 'blocks', length: 15, sound: true, stickers: [], best: {} };
 
 export function load(): Saved {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { ...DEFAULTS };
     const { level, ...rest } = JSON.parse(raw);
-    const saved: Saved = { ...DEFAULTS, ...rest };
+    const saved: Saved = { ...DEFAULTS, ...rest, language: normalizeLanguage(rest.language) };
     // Saves from before modes existed kept a single add/take-away level.
     if (typeof level === 'number' && !rest.levelFor) saved.levelFor = { ...DEFAULTS.levelFor, plus: level as LevelId };
     return saved;

@@ -39,3 +39,14 @@ The build uses relative paths, so it works under any repo name.
 - `src/components/`: the screens (home, quiz, results, sticker book, worksheet)
 - `src/styles.css`: colors, fonts, and layouts for tablets and phones
 - `design/`: the original clickable mockup, and `og-card.html`, the picture shown when the link is shared (`public/og.png`, 1200×630). After editing it, take a 1200×630 screenshot of it and save over `public/og.png`.
+
+## Languages
+
+Choose English or 简体中文 from the language selector on the mode or home screen.
+The choice is stored on the device alongside existing progress; older saved progress
+continues to work. Interface strings and story translations live in `src/lib/i18n.ts`.
+Explanation messages use semantic keys and named parameters in
+`src/lib/explain-i18n.ts`; the teaching logic in `src/lib/explain.ts` selects those
+keys directly. Keep the same keys and named parameters in every language, and run
+the multilingual tests when adding or changing a teaching step. Adding a language
+also requires translating the interface and story templates.

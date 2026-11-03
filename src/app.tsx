@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { ExplainPref } from './components/Explain';
+import { LanguageProvider } from './components/Language';
 import { Home } from './components/Home';
 import { ModePick } from './components/ModePick';
 import { Quiz, type QuizResult } from './components/Quiz';
@@ -33,6 +34,7 @@ export function App() {
   useEffect(() => {
     save(saved);
     setSound(saved.sound);
+    document.documentElement.lang = saved.language;
   }, [saved]);
 
   const update = (patch: Partial<Saved>) => setSaved((s) => ({ ...s, ...patch }));
@@ -111,5 +113,5 @@ export function App() {
     }
   })();
 
-  return <ExplainPref.Provider value={{ style: saved.explain, setStyle: (explain) => update({ explain }) }}>{body}</ExplainPref.Provider>;
+  return <LanguageProvider language={saved.language} setLanguage={(language) => update({ language })}><ExplainPref.Provider value={{ style: saved.explain, setStyle: (explain) => update({ explain }) }}>{body}</ExplainPref.Provider></LanguageProvider>;
 }
