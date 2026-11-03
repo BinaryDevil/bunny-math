@@ -1,0 +1,19 @@
+{
+  "name": "bunny-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json",
+    "deploy": "wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply bunny-collection --remote"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.4.6",
+    "@cloudflare/workers-types": "5.20261019.1",
+    "typescript": "7.0.2",
+    "vitest": "5.0.5",
+    "wrangler": "4.151.3"
+  }
+}

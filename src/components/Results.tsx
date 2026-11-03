@@ -6,6 +6,7 @@ import { sounds } from '../lib/sound';
 import type { Question, Skill } from '../lib/types';
 import { Bunny, Star } from './Bunny';
 import { ExplainSheet } from './Explain';
+import { ShareCode } from './Share';
 import type { QuizResult } from './Quiz';
 
 export function starsFor(right: number, total: number) {
@@ -18,6 +19,8 @@ const CHEER: Record<1 | 2 | 3, MessageKey> = { 3: 'res.cheer.3', 2: 'res.cheer.2
 type Props = {
   result: QuizResult;
   sticker: string | null;
+  /** The share code for this quiz (none for practice rounds). */
+  code: string | null;
   canLevelUp: boolean;
   onHome: () => void;
   onAgain: () => void;
@@ -25,7 +28,7 @@ type Props = {
   onNextLevel: () => void;
 };
 
-export function Results({ result, sticker, canLevelUp, onHome, onAgain, onPractice, onNextLevel }: Props) {
+export function Results({ result, sticker, code, canLevelUp, onHome, onAgain, onPractice, onNextLevel }: Props) {
   const t = useT();
   const { questions, firstTry } = result;
   const right = questions.filter((q) => firstTry[q.id]).length;
@@ -111,6 +114,7 @@ export function Results({ result, sticker, canLevelUp, onHome, onAgain, onPracti
               </div>
             </div>
           )}
+          {code && <ShareCode code={code} text={t('share.quizText', { code })} />}
           <div class="res-actions">
             {missed > 0 ? (
               <button class="puffy butter" onClick={() => onPractice(missedSkills)}>

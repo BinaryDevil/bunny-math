@@ -25,6 +25,10 @@ export type Question = {
   id: string;
   fact: Fact;
   skill: Skill;
+  /** How hard the sum is, 1–6. Adventure pays tier + 1 carrots for a right answer. */
+  tier?: number;
+  /** A Tricky-path "hard pick", worth half a tier more. */
+  hard?: boolean;
 } & (
   | { kind: 'type' }
   | { kind: 'story'; story: Story }

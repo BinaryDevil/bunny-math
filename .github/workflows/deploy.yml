@@ -26,6 +26,9 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+        env:
+          # The leaderboard server (worker/). Unset: the app works, without a leaderboard.
+          VITE_LEADERBOARD_URL: ${{ vars.VITE_LEADERBOARD_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

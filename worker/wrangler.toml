@@ -1,0 +1,14 @@
+# One server and one database for every Bunny game: players and their names are shared.
+name = "bunny-api"
+main = "src/index.ts"
+compatibility_date = "2026-10-15"
+
+[vars]
+# Sites allowed to call this server from a browser, comma-separated. Add yours if the site moves.
+ALLOWED_ORIGINS = "https://binarydevil.github.io,http://localhost:5173,http://127.0.0.1:5173"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bunny-collection"
+database_id = "90b20c30-39c3-46f4-b32b-8d3a2da1f04b"
+migrations_dir = "migrations"

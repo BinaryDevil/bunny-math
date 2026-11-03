@@ -22,10 +22,66 @@ export type Saved = {
   stickers: string[];
   /** Best star count per level. */
   best: Partial<Record<LevelId, number>>;
+  /** Adventure mode is switched on (the night look, Rascal, carrots). */
+  adventure: boolean;
+  adv: AdvStats;
 };
 
+/** What Adventure remembers. Carrots are only ever added: `jar` may be spendable one day, `totalEarned` never goes down. */
+export type AdvStats = {
+  runsPlayed: number;
+  wins: number;
+  /** The furthest meadow reached, 0–3 (3 means a run was won). */
+  bestMeadow: number;
+  jar: number;
+  totalEarned: number;
+  /** The most carrots earned on each share code, newest last. */
+  bestByCode: Record<string, number>;
+  /** Features the child has already met, so "New!" shows only once. */
+  seen: string[];
+};
+
+export const MAX_CODES = 50;
+const freshAdv = (): AdvStats => ({ runsPlayed: 0, wins: 0, bestMeadow: 0, jar: 0, totalEarned: 0, bestByCode: {}, seen: [] });
+const count = (v: unknown, max = Number.MAX_SAFE_INTEGER) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : 0);
+
+function cleanAdv(data: unknown): AdvStats {
+  const out = freshAdv();
+  if (!isObj(data)) return out;
+  out.runsPlayed = count(data.runsPlayed);
+  out.wins = Math.min(out.runsPlayed, count(data.wins));
+  out.bestMeadow = count(data.bestMeadow, 3);
+  out.totalEarned = count(data.totalEarned);
+  out.jar = Math.min(out.totalEarned, count(data.jar));
+  if (isObj(data.bestByCode)) {
+    const entries = Object.entries(data.bestByCode).filter(([k, v]) => k.length <= 32 && typeof v === 'number' && v >= 0);
+    out.bestByCode = Object.fromEntries(entries.slice(-MAX_CODES).map(([k, v]) => [k, Math.floor(v as number)]));
+  }
+  if (Array.isArray(data.seen)) out.seen = [...new Set(data.seen.filter((x): x is string => typeof x === 'string' && x.length <= 32))].slice(0, 32);
+  return out;
+}
+
+/** Adds a finished run to the stats. */
+export function recordRun(adv: AdvStats, run: { code: string; carrots: number; won: boolean; meadowsCleared: number }): AdvStats {
+  const bestByCode = { ...adv.bestByCode };
+  const best = Math.max(bestByCode[run.code] ?? 0, run.carrots);
+  delete bestByCode[run.code];
+  bestByCode[run.code] = best;
+  const keys = Object.keys(bestByCode);
+  for (const k of keys.slice(0, Math.max(0, keys.length - MAX_CODES))) delete bestByCode[k];
+  return {
+    ...adv,
+    runsPlayed: adv.runsPlayed + 1,
+    wins: adv.wins + (run.won ? 1 : 0),
+    bestMeadow: Math.max(adv.bestMeadow, run.won ? 3 : run.meadowsCleared),
+    jar: adv.jar + run.carrots,
+    totalEarned: adv.totalEarned + run.carrots,
+    bestByCode,
+  };
+}
+
 const KEY = 'bunny-math:v1';
-const DEFAULTS: Saved = { levelFor: { plus: 1, all: 11 }, explain: 'blocks', length: 15, sound: true, stickers: [], best: {} };
+const DEFAULTS: Saved = { levelFor: { plus: 1, all: 11 }, explain: 'blocks', length: 15, sound: true, stickers: [], best: {}, adventure: false, adv: freshAdv() };
 
 export function load(): Saved {
   try {
@@ -37,7 +93,7 @@ export function load(): Saved {
   }
 }
 
-const fresh = (): Saved => ({ ...DEFAULTS, levelFor: { ...DEFAULTS.levelFor }, stickers: [], best: {} });
+const fresh = (): Saved => ({ ...DEFAULTS, levelFor: { ...DEFAULTS.levelFor }, stickers: [], best: {}, adv: freshAdv() });
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const isLevelIn = (mode: Mode, v: unknown): v is LevelId => LEVELS.some((l) => l.mode === mode && l.id === v);
 
@@ -67,6 +123,8 @@ export function clean(data: unknown): Saved {
       if (typeof n === 'number' && n >= 0 && n <= 3) out.best[l.id] = Math.floor(n);
     }
   }
+  if (typeof data.adventure === 'boolean') out.adventure = data.adventure;
+  out.adv = cleanAdv(data.adv);
   return out;
 }
 
