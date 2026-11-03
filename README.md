@@ -23,6 +23,7 @@ npm run dev
 
 ```bash
 npm test
+npm run build && npm run test:e2e   # every screen, 9 languages, phone/landscape/desktop sizes in WebKit (~5 min); needs `npx playwright install webkit` once
 ```
 
 ## Put it on GitHub Pages

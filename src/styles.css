@@ -35,6 +35,9 @@
 :root:lang(zh-TW) { --cjk: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", "Noto Sans CJK TC", "Source Han Sans TC"; }
 :root:lang(ja) { --cjk: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans JP", "Noto Sans CJK JP"; }
 :root:lang(ko) { --cjk: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "Noto Sans CJK KR"; }
+/* Japanese and Korean UI text is written with spaces between words: wrap there, not inside a word. */
+:root:is(:lang(ja), :lang(ko)) :is(.tagline, .mode-title, .mode-name, .mode-blurb) { word-break: keep-all; overflow-wrap: anywhere; line-break: strict; }
+:root:lang(ja) .lv-name { line-break: strict; } /* no line starting with a small ゅ or ー */
 /* The display font is a chunky one; system CJK fonts at weight 400 look thin next to it. */
 :root:is(:lang(zh), :lang(ja), :lang(ko)) :is(.title, .mode-title, .mode-name, .start, .fb-title, .dialog h2, .cheer, .score, .panel h2, .book-title, .ws-title, .caption, .caption b, .sheet-title) {
   font-weight: 700;
@@ -42,6 +45,8 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
+/* Stop iOS Safari enlarging text on its own (e.g. when the phone is turned sideways). */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body {
   font-family: var(--body);
   color: var(--ink);
@@ -104,7 +109,11 @@ h1, h2, p { margin: 0; }
 }
 
 /* ---------- Top bar ---------- */
-.topbar { display: flex; align-items: center; gap: 12px; min-height: 52px; }
+/*
+ * The bar never shrinks, and it sits above the rest of the screen: even if something below
+ * ever grows into it, its buttons and the language picker stay visible and tappable.
+ */
+.topbar { display: flex; align-items: center; gap: 12px; min-height: 52px; flex: none; position: relative; z-index: 2; }
 .topbar .spacer { flex: 1; }
 .dots { flex: 1; min-width: 0; display: flex; justify-content: center; align-items: center; gap: clamp(3px, 0.8vw, 8px); list-style: none; margin: 0; padding: 0; }
 .dots li {
@@ -132,7 +141,12 @@ h1, h2, p { margin: 0; }
   gap: 16px;
   padding-top: 12px;
 }
-.q-pane { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; padding-top: 56px; }
+.q-pane {
+  flex: 1; min-height: 0; display: flex; flex-direction: column; padding-top: 56px; padding-bottom: 8px;
+  /* Centred with auto margins (see .home-body): a card taller than the pane scrolls, it never covers the keypad or the bar. */
+  overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.q-pane > .q-card { margin-block: auto; }
 .q-card {
   position: relative;
   container-type: inline-size;
@@ -186,7 +200,8 @@ h1, h2, p { margin: 0; }
   display: flex; align-items: center; justify-content: center;
   gap: .22em;
   font-weight: 800;
-  font-size: clamp(40px, min(14cqi, 14dvh), 120px);
+  /* --digits (set by the quiz) counts every digit on the line: 503 − 167 = 336 is ~(.6 × 9 + 3)em wide. Shrink to fit it. */
+  font-size: max(24px, min(clamp(40px, min(14cqi, 14dvh), 120px), calc(100cqi / (var(--digits, 6) * .6 + 3))));
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -228,7 +243,7 @@ h1, h2, p { margin: 0; }
 
 .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .choice {
-  height: clamp(72px, 15dvh, 140px);
+  min-height: clamp(72px, 15dvh, 140px); /* min-: a two-line "plus grand" label can't spill out */
   font-size: clamp(32px, 6.5dvh, 60px);
   font-variant-numeric: tabular-nums;
 }
@@ -269,6 +284,8 @@ h1, h2, p { margin: 0; }
   padding: 20px 20px max(20px, env(safe-area-inset-bottom));
   display: flex; flex-direction: column; gap: 14px;
   animation: slideup .3s ease-out;
+  /* If the blocks and the caption don't fit (short phones), scroll: Next and Back stay reachable. */
+  overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
 }
 .sheet-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .sheet-title { font-family: var(--display); font-size: 22px; flex: 1; white-space: nowrap; }
@@ -398,20 +415,38 @@ h1, h2, p { margin: 0; }
 }
 .dialog .bunny { width: 96px; aspect-ratio: 120/130; }
 .dialog h2 { font-family: var(--display); font-weight: 400; font-size: 26px; }
-.dialog-actions { display: flex; gap: 12px; width: 100%; }
-.dialog-actions .puffy { flex: 1; min-height: 56px; font-size: 20px; }
+.dialog-actions { display: flex; flex-wrap: wrap; gap: 12px; width: 100%; }
+/* Side by side when they fit; a long word ("Weitermachen") puts each button on its own row. */
+.dialog-actions .puffy { flex: 1 1 auto; min-height: 56px; font-size: 20px; padding-inline: 12px; }
 
 /* ---------- Home ---------- */
-.home-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; justify-content: center; }
-.hero { display: flex; align-items: center; gap: 16px; justify-content: center; }
-.hero .bunny { width: clamp(90px, 16dvh, 180px); aspect-ratio: 120/130; flex: none; }
-.title { font-family: var(--display); font-weight: 400; font-size: clamp(36px, 7dvh, 64px); line-height: 1; }
-.title span { display: inline-block; }
+/*
+ * Centred with auto margins, not justify-content: center. When the content is taller than
+ * the screen (long words, CJK, short phones), justify-content: center pushes it out of the
+ * top as well as the bottom, right over the top bar. Auto margins only centre spare space;
+ * anything that doesn't fit scrolls instead.
+ */
+.home-body, .mode-body {
+  overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  /* Bleed into the screen padding, so the ✓ badge and the tilted cards aren't clipped at the sides. */
+  margin-inline: -10px; padding-inline: 10px;
+}
+.home-body > :first-child, .mode-body > :first-child { margin-top: auto; }
+.home-body > :last-child, .mode-body > :last-child { margin-bottom: auto; }
+.home-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; padding-bottom: 8px; /* room for the Start button's shadow */ }
+.hero { display: flex; align-items: center; gap: 16px; justify-content: center; padding-top: 8px; /* the tilted words stay clear of the bar */ }
+.hero > div { min-width: 0; }
+.hero .bunny { width: clamp(72px, min(16dvh, 30vw), 180px); aspect-ratio: 120/130; flex: none; }
+/* Sized by height and by width, so the longest word ("さんすう") always fits next to the bunny. */
+.title { font-family: var(--display); font-weight: 400; font-size: clamp(28px, min(7dvh, 10.5vw), 64px); line-height: 1.05; }
+/* Each word keeps together ("うさぎ" / "さんすう"); the title may only wrap between the words. */
+.title span { display: inline-block; white-space: nowrap; }
 .title span:nth-child(odd) { color: var(--berry); transform: rotate(-4deg); }
 .title span:nth-child(even) { transform: rotate(3deg); }
 .tagline { margin-top: 6px; font-size: clamp(18px, 2.6dvh, 22px); font-weight: 600; color: var(--ink-soft); }
 .home-pick { display: flex; flex-direction: column; gap: 16px; }
-.levels { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+/* minmax(0, 1fr): the columns never grow past the screen because of a long sum like 503 − 167. */
+.levels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .level {
   position: relative;
   text-align: left;
@@ -465,7 +500,7 @@ h1, h2, p { margin: 0; }
 .mode-btn span { color: var(--ink-soft); font-size: 14px; }
 
 /* ---------- Mode picker ---------- */
-.mode-body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: clamp(16px, 4dvh, 40px); }
+.mode-body { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: clamp(16px, 4dvh, 40px); padding-bottom: 8px; }
 .mode-hero { display: flex; align-items: center; gap: 16px; max-width: 100%; }
 .mode-hero .bunny { width: clamp(72px, 14dvh, 140px); aspect-ratio: 120/130; flex: none; }
 .mode-title { font-family: var(--display); font-weight: 400; font-size: clamp(26px, 5dvh, 44px); line-height: 1.15; min-width: 0; overflow-wrap: break-word; hyphens: auto; }
@@ -523,7 +558,7 @@ h1, h2, p { margin: 0; }
 }
 .qgrid button.x { background: var(--peach); }
 .skills { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.skills li { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; }
+.skills li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-weight: 700; font-size: 19px; } /* the chip drops below a long skill name */
 .skill-name { min-width: 0; overflow-wrap: break-word; }
 .skill-count { margin-left: auto; color: var(--ink-soft); font-size: 16px; font-variant-numeric: tabular-nums; }
 .chip { padding: 2px 12px; border-radius: 999px; border: 2px solid var(--ink); font-size: 15px; font-weight: 800; white-space: nowrap; }
@@ -562,7 +597,7 @@ h1, h2, p { margin: 0; }
   .pad-pane { flex: 1; max-width: 460px; }
   .key { height: clamp(44px, 12dvh, 100px); font-size: clamp(24px, 5.5dvh, 46px); }
   .check { height: clamp(48px, 11dvh, 88px); }
-  .choice { height: clamp(64px, 22dvh, 170px); }
+  .choice { min-height: clamp(64px, 22dvh, 170px); }
 
   .scrim .sheet { left: 50%; top: 50%; bottom: auto; transform: translate(-50%, -50%); width: min(1040px, 92vw); max-height: 90dvh; border: var(--line) solid var(--ink); border-radius: var(--r-lg); animation: none; }
   .sheet { display: grid; grid-template-columns: 1.4fr 1fr; grid-template-rows: auto 1fr auto; column-gap: 24px; }
@@ -572,11 +607,12 @@ h1, h2, p { margin: 0; }
   .sheet-foot { grid-column: 2; flex-wrap: wrap; }
   .sheet-foot .steps { flex-basis: 100%; justify-content: flex-start; margin-bottom: 6px; }
 
-  .home-body { flex-direction: row; align-items: center; gap: clamp(24px, 5vw, 72px); padding: 0 clamp(0px, 3vw, 48px); }
+  .home-body { flex-direction: row; align-items: center; gap: clamp(24px, 5vw, 72px); padding: 0 clamp(10px, 3vw, 48px); }
+  .home-body > * { margin-block: auto; } /* side by side: centre each column without pushing it off-screen */
   .hero { flex-direction: column; text-align: center; flex: 1; }
   .hero .bunny { width: clamp(100px, 30dvh, 240px); }
   .home-pick { flex: 1.2; }
-  .levels.n6 { grid-template-columns: repeat(3, 1fr); }
+  .levels.n6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .levels.n6 .level { padding: 10px 12px; margin: 6px; }
   .levels.n6 .lv-name { font-size: clamp(16px, 2.4dvh, 21px); }
   .levels.n6 .lv-eg { font-size: clamp(18px, 3dvh, 27px); }
@@ -612,7 +648,8 @@ h1, h2, p { margin: 0; }
 }
 
 /* Narrow phones */
-@media (orientation: portrait) and (max-width: 420px) {
+/* Up to 440px so the biggest phones (430px wide) get the compact layout too. */
+@media (orientation: portrait) and (max-width: 440px) {
   .bubble, .count { display: none; }
   .dots li { width: auto; flex: 1 1 0; max-width: 16px; border-width: 2px; }
   .sheet-foot .puffy { padding: 8px 16px; }
@@ -635,6 +672,40 @@ h1, h2, p { margin: 0; }
   .sheet-foot .puffy { flex: 1; }
   .levels.n6 .lv-eg { font-size: 21px; }
   .res-actions .puffy { min-width: 140px; }
+  .print-bar .seg button { padding: 6px 14px; }
+}
+/* Short phones (iPhone SE and the like): tighten the home screen so Start shows without scrolling. */
+@media (orientation: portrait) and (max-height: 700px) {
+  .home-body { gap: 10px; }
+  .hero { gap: 10px; }
+  .hero .bunny { width: clamp(56px, 11dvh, 80px); }
+  .tagline { font-size: 15px; margin-top: 2px; }
+  .home-pick { gap: 10px; }
+  .levels.n6 { gap: 2px 8px; }
+  .levels.n6 .level { padding: 4px 10px; margin: 5px; }
+  .levels.n6 .lv-name { font-size: 15px; }
+  .levels.n6 .lv-eg { font-size: min(20px, 5.4vw); }
+  .length { font-size: 17px; }
+  .seg button { min-height: 44px; padding: 6px 16px; font-size: 18px; }
+  .start { height: 56px; font-size: 24px; }
+  /* Quiz: the card, the keypad and Check all fit on an iPhone SE. */
+  .quiz-body { padding-top: 4px; gap: 10px; }
+  .q-pane { padding-top: 44px; }
+  .peek { width: 60px; }
+  .q-card { padding-block: 14px; }
+  .hint-row { margin-top: 8px; }
+  .hint-btn { padding: 6px 16px; font-size: 16px; }
+  .story-pic { font-size: 40px; }
+  .story-text { font-size: 18px; }
+  .pad { gap: 6px; }
+  .pad-pane { gap: 8px; }
+  .key { height: 46px; }
+  .check { height: 50px; }
+  /* "Show me how" */
+  .sheet { gap: 8px; padding-top: 14px; }
+  .stage { min-height: 150px; padding-top: 30px; }
+  .stage.has-flats { --u: 7px; }
+  .sheet-foot .puffy { min-height: 48px; }
 }
 @media (orientation: portrait) and (max-width: 350px) {
   .topbar .icon-btn { width: 40px; height: 40px; font-size: 18px; }
@@ -650,7 +721,8 @@ h1, h2, p { margin: 0; }
 /* ---------- Printable worksheet ---------- */
 .print-screen { height: auto; min-height: 100dvh; overflow: visible; }
 .print-bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
-.print-bar .length { margin: 0 8px; }
+.print-bar .length { margin: 0 8px; flex-wrap: wrap; row-gap: 6px; } /* the page buttons drop below the label if they don't fit */
+.print-bar .length > span { white-space: nowrap; } /* not "ペー / ジ" */
 .print-bar .puffy { min-height: 52px; padding: 6px 20px; font-size: 19px; }
 .sheet-paper {
   background: #fff; color: #222;

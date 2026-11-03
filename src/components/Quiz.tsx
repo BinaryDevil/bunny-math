@@ -52,6 +52,8 @@ function Prompt({ q, value, status }: { q: Question; value: string; status: Stat
   const slot = <span class={slotCls}>{value}</span>;
   const o = <span class="op">{opSymbol(op)}</span>;
   const eq = <span class="op">=</span>;
+  // How many digits the line will show (the answer box included), so the CSS can fit it on one line.
+  const digits = { '--digits': `${a}${b}${q.kind === 'compare' ? q.than : c}`.length };
 
   if (q.kind === 'story') {
     return (
@@ -68,7 +70,7 @@ function Prompt({ q, value, status }: { q: Question; value: string; status: Stat
   }
   if (q.kind === 'missing') {
     return (
-      <div class="equation" aria-live="polite">
+      <div class="equation" aria-live="polite" style={digits}>
         {q.hide === 'a' ? slot : <span>{a}</span>}
         {o}
         {q.hide === 'b' ? slot : <span>{b}</span>}
@@ -79,7 +81,7 @@ function Prompt({ q, value, status }: { q: Question; value: string; status: Stat
   }
   if (q.kind === 'compare') {
     return (
-      <div class="equation" aria-live="polite">
+      <div class="equation" aria-live="polite" style={digits}>
         <span>{a}</span>
         {o}
         <span>{b}</span>
@@ -89,7 +91,7 @@ function Prompt({ q, value, status }: { q: Question; value: string; status: Stat
     );
   }
   return (
-    <div class="equation" aria-live="polite">
+    <div class="equation" aria-live="polite" style={digits}>
       <span>{a}</span>
       {o}
       <span>{b}</span>
