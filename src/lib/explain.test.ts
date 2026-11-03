@@ -117,21 +117,27 @@ describe('every question, both styles', () => {
     }
   });
 
+  // Checks every box of every step of 6,000 questions. One expect() per box made it take 8s on
+  // Cloudflare's build machine (past Vitest's 5s limit), so problems are collected and checked once.
   it('column method writes one digit per box and the answer on the right row', () => {
+    const problems: string[] = [];
     for (const q of quizzes) {
+      const sum = `${q.fact.a} ${q.fact.op} ${q.fact.b}`;
       const steps = explain(q, 'column');
       for (const s of steps) {
         if (s.scene.type !== 'column') continue;
         for (const row of s.scene.rows) {
-          expect(row.cells).toHaveLength(s.scene.width);
-          for (const c of row.cells) if (c) expect(c.t).toMatch(/^\d$/);
+          if (row.cells.length !== s.scene.width) problems.push(`${sum}: row of ${row.cells.length} boxes, want ${s.scene.width}`);
+          for (const c of row.cells) if (c && !/^\d$/.test(c.t)) problems.push(`${sum}: box holds "${c.t}"`);
         }
       }
       const final = steps.filter((s) => s.scene.type === 'column').at(-1)!.scene;
       const want = q.kind === 'missing' ? correctAnswer(q) : q.fact.c;
       const answerRow = final.type === 'column' && final.division ? 0 : final.type === 'column' ? final.rows.length - 1 : -1;
-      expect(rowValue(final, answerRow)).toBe(want);
+      const got = rowValue(final, answerRow);
+      if (got !== want) problems.push(`${sum}: answer row reads ${got}, want ${want}`);
     }
+    expect(problems.slice(0, 10)).toEqual([]);
   });
 
   it('adding and taking away keeps the right amount of blocks', () => {

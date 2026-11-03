@@ -1,6 +1,7 @@
 {
   "name": "bunny-api",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
