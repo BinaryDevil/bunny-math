@@ -10,5 +10,5 @@ ALLOWED_ORIGINS = "https://binarydevil.github.io,http://localhost:5173,http://12
 [[d1_databases]]
 binding = "DB"
 database_name = "bunny-collection"
-database_id = "REPLACE_WITH_YOUR_D1_ID"
+database_id = "90b20c30-39c3-46f4-b32b-8d3a2da1f04b"
 migrations_dir = "migrations"
