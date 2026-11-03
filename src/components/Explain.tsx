@@ -1,7 +1,8 @@
 import { createContext, Fragment } from 'preact';
-import { useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { useLang, useT, type MessageKey } from '../i18n';
 import { explain, questionText, type Group, type Piece, type Scene } from '../lib/explain';
+import { largestFit } from '../lib/fit';
 import { sounds } from '../lib/sound';
 import type { ExplainStyle } from '../lib/storage';
 import type { Question } from '../lib/types';
@@ -48,9 +49,13 @@ function Blocks({ group }: { group: Group }) {
           ))}
         </div>
       )}
-      {group.rods.map((p, i) => (
-        <Rod key={`r${i}`} piece={p} />
-      ))}
+      {group.rods.length > 0 && (
+        <div class="tens" style={{ '--cols': Math.min(group.rods.length, 10) }}>
+          {group.rods.map((p, i) => (
+            <Rod key={`r${i}`} piece={p} />
+          ))}
+        </div>
+      )}
       {group.cubes.length > 0 && (
         <div class="ones">
           {group.cubes.map((p, i) => (
@@ -101,26 +106,111 @@ function ColumnView({ scene }: { scene: Extract<Scene, { type: 'column' }> }) {
   );
 }
 
-function Stage({ scene }: { scene: Scene }) {
-  if (scene.type === 'array') return <ArrayView scene={scene} />;
-  if (scene.type === 'column') return <ColumnView scene={scene} />;
-  if (scene.type === 'text') {
-    return (
-      <div class="stage">
-        <div class="text-scene">
-          {scene.lines.map((l, i) => (
-            <Fragment key={i}>
-              {i > 0 && <span class="arrow">⬇</span>}
-              <span>{l.replace(/-/g, '−')}</span>
-            </Fragment>
-          ))}
-        </div>
-      </div>
-    );
+/**
+ * Cube sizes (CSS px). Below MIN_CUBE kids can't count the cubes, or the 10 in a rod. Cubes only go
+ * below SCROLL_CUBE when that keeps the whole picture on screen; if even MIN_CUBE doesn't fit, the
+ * sheet scrolls and the cubes stay at SCROLL_CUBE.
+ */
+export const MIN_CUBE = 10;
+export const SCROLL_CUBE = 12;
+const MAX_CUBE = 30;
+
+/** Above this cube size the usual layout (ones in rows of 5) is kept even if another is bigger. */
+const COMFY_CUBE = 18;
+
+/**
+ * Ways to lay the pieces out, the usual one first. `ones-tall`: ones in a column of pairs beside the
+ * rods instead of rows of 5 (much narrower). `flats-wide`: hundreds in rows of 5 instead of 3
+ * (no taller than a rod).
+ */
+const LAYOUTS = [[], ['flats-wide'], ['ones-tall'], ['ones-tall', 'flats-wide']];
+
+/**
+ * Sizes the blocks to the panel: the biggest cube (MIN_CUBE..MAX_CUBE) at which the whole picture
+ * fits, whatever the number of pieces and however they wrap, trying the LAYOUTS when the usual one
+ * would make the cubes small. If even the smallest cubes don't fit (3-digit sums on a small phone),
+ * the panel grows instead and the sheet scrolls, so the blocks never spill out of the panel and
+ * never get too small to count.
+ */
+function fitBlocks(stage: HTMLElement) {
+  const all = LAYOUTS.flat();
+  stage.style.minHeight = '';
+  stage.style.paddingTop = '';
+  stage.classList.remove(...all);
+  const cs = getComputedStyle(stage);
+  const pad = { l: parseFloat(cs.paddingLeft), r: parseFloat(cs.paddingRight), t: parseFloat(cs.paddingTop), b: parseFloat(cs.paddingBottom) };
+  // Groups and the pieces they're made of (a group can be squeezed narrower than its rods).
+  const parts = [...stage.querySelectorAll<HTMLElement>(':scope > :not(.legend), .hundreds, .tens, .ones')];
+  // Keep clear of the legend ("▮ = 10  ▪ = 1") in the top corner.
+  const legend = stage.querySelector<HTMLElement>('.legend');
+  pad.t = Math.max(pad.t, legend ? legend.offsetTop + legend.offsetHeight + 4 : 0);
+  // As padding, so the picture is centred in the room below the legend.
+  stage.style.paddingTop = `${pad.t}px`;
+  // Layout boxes (offset*), so the pop-in animation's scale doesn't fool the measurement.
+  const box = () => {
+    let top = Infinity, left = Infinity, right = -Infinity, bottom = -Infinity;
+    for (const el of parts) {
+      top = Math.min(top, el.offsetTop);
+      left = Math.min(left, el.offsetLeft);
+      right = Math.max(right, el.offsetLeft + el.offsetWidth);
+      bottom = Math.max(bottom, el.offsetTop + el.offsetHeight);
+    }
+    return { top, left, right, bottom };
+  };
+  const layout = (classes: string[], u: number) => {
+    for (const c of all) stage.classList.toggle(c, classes.includes(c));
+    stage.style.setProperty('--u', `${u}px`);
+    return box();
+  };
+  const fits = (classes: string[]) => (u: number) => {
+    const b = layout(classes, u);
+    return b.left >= pad.l - 0.5 && b.right <= stage.clientWidth - pad.r + 0.5 && b.top >= pad.t - 0.5 && b.bottom <= stage.clientHeight - pad.b + 0.5;
+  };
+  // Only the layouts that change something here.
+  const hasOnes = !!stage.querySelector('.ones');
+  const manyFlats = [...stage.querySelectorAll('.hundreds')].some((h) => h.childElementCount > 3);
+  const layouts = LAYOUTS.filter((l) => (hasOnes || !l.includes('ones-tall')) && (manyFlats || !l.includes('flats-wide')));
+  let best: { classes: string[]; u: number } | null = null;
+  for (const classes of layouts) {
+    const u = largestFit(MIN_CUBE, MAX_CUBE, fits(classes));
+    if (u !== null && (!best || u > best.u)) best = { classes, u };
+    if (best && best.u >= COMFY_CUBE) break;
   }
+  if (best) {
+    layout(best.classes, best.u);
+    return;
+  }
+  // Nothing fits: the panel grows and the sheet scrolls. Then the cubes needn't be tiny.
+  // The shortest layout that fits the width (or else the narrowest).
+  const sizes = layouts.map((classes) => {
+    const b = layout(classes, SCROLL_CUBE);
+    return { classes, h: b.bottom - b.top, w: b.right - b.left };
+  });
+  const room = stage.clientWidth - pad.l - pad.r + 0.5;
+  const fitWidth = sizes.filter((x) => x.w <= room);
+  const { classes, h } = fitWidth.length ? fitWidth.reduce((a, b) => (b.h < a.h - 0.5 ? b : a)) : sizes.reduce((a, b) => (b.w < a.w ? b : a));
+  layout(classes, SCROLL_CUBE);
+  const border = parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+  stage.style.minHeight = `${Math.ceil(h + pad.t + pad.b + border)}px`;
+}
+
+function useFitBlocks(ref: { current: HTMLElement | null }) {
+  useLayoutEffect(() => {
+    const fit = () => ref.current && fitBlocks(ref.current);
+    fit();
+    // The caption's font changes the room left for the panel on phones.
+    document.fonts?.ready.then(fit);
+    addEventListener('resize', fit);
+    return () => removeEventListener('resize', fit);
+  }, []);
+}
+
+function BlocksView({ scene }: { scene: Extract<Scene, { type: 'blocks' }> }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useFitBlocks(ref);
   const hasFlats = scene.parts.some((p) => p !== '+' && p.flats?.length);
   return (
-    <div class={`stage ${hasFlats ? 'has-flats' : ''} ${scene.parts.length > 3 ? 'many' : ''}`}>
+    <div ref={ref} class={`stage blocks ${scene.parts.length > 3 ? 'many' : ''}`}>
       <div class="legend" aria-hidden="true">
         {hasFlats && (
           <span>
@@ -140,6 +230,26 @@ function Stage({ scene }: { scene: Scene }) {
   );
 }
 
+function Stage({ scene }: { scene: Scene }) {
+  if (scene.type === 'array') return <ArrayView scene={scene} />;
+  if (scene.type === 'column') return <ColumnView scene={scene} />;
+  if (scene.type === 'text') {
+    return (
+      <div class="stage">
+        <div class="text-scene">
+          {scene.lines.map((l, i) => (
+            <Fragment key={i}>
+              {i > 0 && <span class="arrow">⬇</span>}
+              <span>{l.replace(/-/g, '−')}</span>
+            </Fragment>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return <BlocksView scene={scene} />;
+}
+
 export function ExplainSheet({ question, onClose }: { question: Question; onClose: () => void }) {
   const { style, setStyle } = useContext(ExplainPref);
   const t = useT();
@@ -156,7 +266,8 @@ export function ExplainSheet({ question, onClose }: { question: Question; onClos
   // Move keyboard focus into the sheet when it opens, and give it back when it closes.
   useEffect(() => {
     const before = document.activeElement as HTMLElement | null;
-    nextRef.current?.focus();
+    // Without scrolling: on a small phone the sheet may scroll, and the picture's top should show first.
+    nextRef.current?.focus({ preventScroll: true });
     return () => {
       if (before?.isConnected) before.focus();
     };

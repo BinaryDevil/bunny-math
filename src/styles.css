@@ -284,6 +284,8 @@ h1, h2, p { margin: 0; }
   padding: 20px 20px max(20px, env(safe-area-inset-bottom));
   display: flex; flex-direction: column; gap: 14px;
   animation: slideup .3s ease-out;
+  /* A fixed height, so the panel gets all the room that's left and the sheet doesn't jump between steps. */
+  height: 92dvh;
   /* If the blocks and the caption don't fit (short phones), scroll: Next and Back stay reachable. */
   overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
 }
@@ -309,12 +311,15 @@ h1, h2, p { margin: 0; }
   gap: clamp(12px, 3vw, 32px);
   padding: 36px 16px 16px;
   flex-wrap: wrap;
-  --u: clamp(11px, min(3.2vmin, 4dvh), 30px);
+  /* Cube size. For blocks, Explain.tsx sets it to the biggest that fits (12px to 30px). */
+  --u: 20px;
 }
 .legend { position: absolute; top: 8px; left: 12px; display: flex; gap: 16px; align-items: center; font-weight: 800; font-size: 17px; color: var(--ink-soft); }
 .legend > span { display: flex; align-items: center; gap: 6px; }
 .legend .cube { --u: 14px; }
 .group { display: flex; align-items: flex-end; gap: calc(var(--u) * .5); flex-wrap: wrap; justify-content: center; }
+/* A number's rods stay together, at most 10 to a row (19 rods: 10 and 9, never 18 and 1). */
+.tens { display: grid; grid-template-columns: repeat(var(--cols), var(--u)); gap: calc(var(--u) * .4) calc(var(--u) * .5); align-items: end; }
 .rod {
   position: relative;
   width: var(--u);
@@ -327,6 +332,8 @@ h1, h2, p { margin: 0; }
 .legend .rod { grid-template-rows: repeat(10, 3px); border-width: 2px; width: 12px; border-radius: 3px; }
 .legend .rod i { border-bottom-width: 0; }
 .ones { display: grid; grid-template-columns: repeat(5, var(--u)); gap: 3px; align-content: end; }
+/* Narrow panels: ones in a column of pairs beside the rods (10 ones are as tall as half a rod). */
+.ones-tall .ones { grid-template-columns: repeat(2, var(--u)); }
 .cube { position: relative; width: var(--u); height: var(--u); border: 2px solid var(--ink); border-radius: 4px; background: var(--lilac); }
 .rod.b, .cube.b { background: var(--berry); }
 .rod.new, .cube.new { background: var(--mint); }
@@ -343,6 +350,8 @@ h1, h2, p { margin: 0; }
 
 /* Hundreds squares (3-digit sums) */
 .hundreds { display: grid; grid-template-columns: repeat(3, auto); gap: 4px; align-content: end; }
+/* Short panels: hundreds in rows of 5, so 9 of them are no taller than a rod. */
+.flats-wide .hundreds { grid-template-columns: repeat(5, auto); }
 .flat {
   position: relative;
   width: calc(var(--u) * 5); aspect-ratio: 1;
@@ -355,8 +364,7 @@ h1, h2, p { margin: 0; }
 .flat.new { background-color: var(--mint); animation: pop .5s cubic-bezier(.3,1.6,.5,1); }
 .flat.gone::after { font-size: calc(var(--u) * 3); }
 .legend .flat { width: 16px; background-size: 20% 20%; }
-.stage.has-flats { --u: clamp(8px, min(2.4vmin, 2.8dvh), 17px); }
-.stage.many { --u: clamp(6px, min(1.9vmin, 2.2dvh), 13px); gap: clamp(8px, 2vw, 18px); }
+.stage.many { gap: clamp(8px, 2vw, 18px); }
 
 /* Dot arrays for times and divide */
 .dot-array {
@@ -599,10 +607,11 @@ h1, h2, p { margin: 0; }
   .check { height: clamp(48px, 11dvh, 88px); }
   .choice { min-height: clamp(64px, 22dvh, 170px); }
 
-  .scrim .sheet { left: 50%; top: 50%; bottom: auto; transform: translate(-50%, -50%); width: min(1040px, 92vw); max-height: 90dvh; border: var(--line) solid var(--ink); border-radius: var(--r-lg); animation: none; }
+  .scrim .sheet { left: 50%; top: 50%; bottom: auto; transform: translate(-50%, -50%); width: min(1040px, 92vw); height: auto; max-height: 90dvh; border: var(--line) solid var(--ink); border-radius: var(--r-lg); animation: none; }
   .sheet { display: grid; grid-template-columns: 1.4fr 1fr; grid-template-rows: auto 1fr auto; column-gap: 24px; }
   .sheet-head { grid-column: 1 / -1; }
-  .stage { grid-row: 2 / 4; min-height: 0; height: min(58dvh, 480px); }
+  /* As tall as the dialog allows (90dvh less its header and padding), up to 480px. */
+  .stage { grid-row: 2 / 4; min-height: 0; height: min(90dvh - 140px, 480px); }
   .caption { align-self: center; text-align: left; }
   .sheet-foot { grid-column: 2; flex-wrap: wrap; }
   .sheet-foot .steps { flex-basis: 100%; justify-content: flex-start; margin-bottom: 6px; }
@@ -638,6 +647,8 @@ h1, h2, p { margin: 0; }
   .panel { padding: 10px 14px; }
   .res-body { overflow-y: auto; }
   .res-side { justify-content: flex-start; }
+  /* The panel fills the sheet's height, so the blocks get every pixel the phone has. */
+  .scrim .sheet { height: 90dvh; }
   .stage { height: auto; }
   .fb-face { display: none; }
   .feedback { padding-top: 10px; padding-bottom: 10px; }
@@ -704,7 +715,6 @@ h1, h2, p { margin: 0; }
   /* "Show me how" */
   .sheet { gap: 8px; padding-top: 14px; }
   .stage { min-height: 150px; padding-top: 30px; }
-  .stage.has-flats { --u: 7px; }
   .sheet-foot .puffy { min-height: 48px; }
 }
 @media (orientation: portrait) and (max-width: 350px) {
