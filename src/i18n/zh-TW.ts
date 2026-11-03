@@ -2,6 +2,7 @@ import type { Messages } from './en';
 
 export const zhTW: Messages = {
   'app.name': '小兔數學',
+  'app.title': '小兔數學 – 小學數學練習',
   'app.nameA': '小兔',
   'app.nameB': '數學',
   'lang.label': '語言',

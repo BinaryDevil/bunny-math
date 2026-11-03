@@ -8,7 +8,7 @@ import { Quiz, type QuizResult } from './components/Quiz';
 import { Results, starsFor } from './components/Results';
 import { Stickers } from './components/Stickers';
 import { Worksheet } from './components/Worksheet';
-import { activate, browserLangs, detectLang, LangContext, t, type Lang } from './i18n';
+import { activate, browserLangs, detectLang, isLang, LangContext, t, type Lang } from './i18n';
 import { codeFromUrl, encodeCode, shareSeed, type ShareCode } from './lib/codes';
 import { generateQuiz, nextLevel } from './lib/generator';
 import { flush, submitRun } from './lib/leaderboard';
@@ -31,11 +31,15 @@ type Screen =
 
 /** A ?seed=123 link always gives the same first quiz, handy for siblings racing each other. */
 const urlSeed = Number(new URLSearchParams(location.search).get('seed')) || null;
+/** A ?lang=fr link (from the worksheet pages) opens in that language, until the child picks one. It is never saved. */
+const urlLang = new URLSearchParams(location.search).get('lang');
 /** A ?code=🍓🦄🌙🐱🌸 link opens the "Have a code?" box on Home, ready to play. */
 const urlCode = codeFromUrl();
-if (urlCode) {
+// Tidy the address bar, so a reload or a bookmark doesn't replay the code.
+if (urlCode || urlLang) {
   const url = new URL(location.href);
   url.searchParams.delete('code');
+  url.searchParams.delete('lang');
   history.replaceState(null, '', url);
 }
 
@@ -46,7 +50,7 @@ export function App() {
   // Follow the browser's language until the child picks one. The detected language is never
   // saved, so changing the device language later still works until a manual pick.
   const [pendingCode, setPendingCode] = useState(urlCode?.text);
-  const [detected, setDetected] = useState<Lang>(() => detectLang(browserLangs()));
+  const [detected, setDetected] = useState<Lang>(() => (isLang(urlLang) ? urlLang : detectLang(browserLangs())));
   const lang = saved.lang ?? detected;
   // Set before the children render, so every t() call below uses the new language.
   activate(lang);
@@ -76,7 +80,7 @@ export function App() {
 
   useEffect(() => {
     document.documentElement.lang = lang;
-    document.title = t('app.name');
+    document.title = t('app.title');
   }, [lang]);
 
   const update = (patch: Partial<Saved>) => setSaved((s) => ({ ...s, ...patch }));

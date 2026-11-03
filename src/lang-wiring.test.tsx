@@ -63,7 +63,8 @@ describe('first visit follows the browser language', () => {
     mount();
     expect(picker().value).toBe(want);
     expect(document.documentElement.lang).toBe(want);
-    expect(document.title).toBe(title);
+    // The tab title is the app's name in that language, then what it is: "Bunny Math – math practice for kids".
+    expect(document.title.startsWith(`${title} – `), document.title).toBe(true);
   });
 
   it('shows translated text on the first screen', () => {

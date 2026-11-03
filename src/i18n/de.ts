@@ -2,6 +2,7 @@ import type { Messages } from './en';
 
 export const de: Messages = {
   'app.name': 'Bunny Math',
+  'app.title': 'Bunny Math – Mathe üben für Kinder',
   'app.nameA': 'Bunny',
   'app.nameB': 'Math',
   'lang.label': 'Sprache',

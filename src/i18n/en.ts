@@ -9,6 +9,8 @@
 export const en = {
   // App
   'app.name': 'Bunny Math',
+  /** The browser tab title. */
+  'app.title': 'Bunny Math – math practice for kids',
   /** The home title is drawn as two wobbly words. */
   'app.nameA': 'Bunny',
   'app.nameB': 'Math',

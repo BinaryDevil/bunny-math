@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#FFF7FA" />
-    <meta name="description" content="Cute math practice for kids: adding, taking away, times tables and dividing, with step-by-step help. Free, no sign-up." />
+    <meta name="description" content="Cute math practice for kids: adding, taking away, times tables and dividing, with step-by-step help and free printable worksheets. No ads, no sign-up." />
 
     <!-- Link previews (WhatsApp, iMessage, Facebook, Slack, X). Image and URL must be absolute. -->
     <meta property="og:type" content="website" />
@@ -21,10 +21,35 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Bunny Math" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
-    <title>Bunny Math</title>
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="canonical" href="https://bunnyland.app/" />
+    <title>Bunny Math – math practice for kids</title>
+    <!-- Tells search engines what the app is. The worksheet pages carry their own (src/pages/worksheets.ts). -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Bunny Math",
+        "url": "https://bunnyland.app/",
+        "description": "Cute math practice for kids around 6 to 9: adding, taking away, times tables and dividing, with step-by-step help and printable worksheets. Free, no ads, no sign-up.",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any",
+        "isAccessibleForFree": true,
+        "inLanguage": ["en", "zh-CN", "zh-TW", "fr", "es", "de", "ja", "ko", "pt"],
+        "audience": { "@type": "EducationalAudience", "educationalRole": "student" },
+        "typicalAgeRange": "6-9",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>
+    <noscript>
+      <h1>Bunny Math 🐰</h1>
+      <p>Cute math practice for kids: adding, taking away, times tables and dividing, with step-by-step help. The game needs JavaScript, but the printable worksheets don't.</p>
+      <p><a href="./worksheets/">Free printable math worksheets, with answers</a></p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

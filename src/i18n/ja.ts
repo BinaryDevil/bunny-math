@@ -3,6 +3,7 @@ import type { Messages } from './en';
 /** Mostly hiragana with spaces between phrases, as in early-grade Japanese books. */
 export const ja: Messages = {
   'app.name': 'うさぎさんすう',
+  'app.title': 'うさぎさんすう – 小学生の算数練習',
   'app.nameA': 'うさぎ',
   'app.nameB': 'さんすう',
   'lang.label': 'ことば',

@@ -6,6 +6,7 @@ import type { Messages } from './en';
  */
 export const ko: Messages = {
   'app.name': '토끼 수학',
+  'app.title': '토끼 수학 – 초등 수학 연습',
   'app.nameA': '토끼',
   'app.nameB': '수학',
   'lang.label': '언어',

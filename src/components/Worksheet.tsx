@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'preact/hooks';
 import { t, useT } from '../i18n';
-import { compareSign, correctAnswer, generateQuiz, levelOf, opSymbol } from '../lib/generator';
+import { levelOf, opSymbol } from '../lib/generator';
 import { randomSeed } from '../lib/rng';
+import { keyAnswer, makeSheets } from '../lib/worksheet';
 import type { LevelId, Question } from '../lib/types';
 
 export const PAGE_CHOICES = [1, 2, 3, 4, 5];
@@ -48,15 +49,6 @@ function PrintedQuestion({ q }: { q: Question }) {
   }
 }
 
-/** Story questions take two lines, so keep at most 2 per sheet so 20 questions still fit on one page. */
-const MAX_STORIES = 2;
-function fitOnePage(questions: Question[]): Question[] {
-  let stories = 0;
-  return questions.map((q) => (q.kind === 'story' && ++stories > MAX_STORIES ? { id: q.id, fact: q.fact, skill: q.skill, kind: 'type' } : q));
-}
-
-const keyAnswer = (q: Question) => (q.kind === 'compare' ? compareSign(q.fact.c, q.than) : correctAnswer(q));
-
 /**
  * Printable worksheets. Each sheet is one printed page; all the answers
  * come after the last sheet, starting on a new page.
@@ -65,11 +57,7 @@ export function Worksheet({ level, count, onBack }: { level: LevelId; count: num
   useT();
   const [seed, setSeed] = useState(randomSeed);
   const [pageCount, setPageCount] = useState(1);
-  const pages = useMemo(() => {
-    // One big batch so no sum repeats across sheets, then cut it into pages.
-    const all = generateQuiz({ level, count: count * pageCount, seed, kinds: ['type', 'type', 'missing', 'compare', 'story'] });
-    return Array.from({ length: pageCount }, (_, p) => fitOnePage(all.slice(p * count, (p + 1) * count)));
-  }, [level, count, pageCount, seed]);
+  const pages = useMemo(() => makeSheets(level, count, pageCount, seed), [level, count, pageCount, seed]);
   const lv = levelOf(level);
 
   return (

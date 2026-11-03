@@ -3,6 +3,7 @@ import type { Messages } from './en';
 /** Write a normal space before ! ? : ; — t() turns it into a non-breaking one. */
 export const fr: Messages = {
   'app.name': 'Bunny Math',
+  'app.title': 'Bunny Math – exercices de calcul pour enfants',
   'app.nameA': 'Bunny',
   'app.nameB': 'Math',
   'lang.label': 'Langue',
