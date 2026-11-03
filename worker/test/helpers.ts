@@ -54,5 +54,5 @@ export async function rename(p: Player, name: PlayerName) {
 }
 
 export async function resetDb() {
-  await env.DB.batch([env.DB.prepare('DELETE FROM runs'), env.DB.prepare('DELETE FROM players')]);
+  await env.DB.batch([env.DB.prepare('DELETE FROM runs'), env.DB.prepare('DELETE FROM players'), env.DB.prepare('DELETE FROM rank_bands')]);
 }

@@ -81,20 +81,39 @@ export async function insertRun(
   return res.meta.changes === 1;
 }
 
+/**
+ * A player's rank: 1 + everyone ahead of them. Rather than counting every player above (D1
+ * bills each row read, so that grew with the board), it adds up the score-band counts kept in
+ * rank_bands (see migrations/0002_rank_bands.sql), then counts only the few players sharing the
+ * player's own 10-carrot band. At most ~200 band rows plus that band's players are read.
+ * Everyone on 0 carrots shares the rank after the last player with carrots.
+ */
 async function rankOf(db: D1Database, row: RankRow): Promise<number> {
+  const t = row.total;
+  if (t <= 0) {
+    const all = await db.prepare('SELECT COALESCE(SUM(n), 0) AS n FROM rank_bands WHERE level = 2').bind().first<{ n: number }>();
+    return (all?.n ?? 0) + 1;
+  }
+  const b0 = Math.floor(t / 10);
+  const b1 = Math.floor(t / 1000);
+  const b2 = Math.floor(t / 100000);
   const ahead = await db
     .prepare(
-      `SELECT COUNT(*) AS n FROM players
-        WHERE total > ?1
-           OR (total = ?1 AND (updated_at < ?2 OR (updated_at = ?2 AND rowid < ?3)))`,
+      `SELECT
+         (SELECT COALESCE(SUM(n), 0) FROM rank_bands WHERE level = 2 AND band > ?1)
+       + (SELECT COALESCE(SUM(n), 0) FROM rank_bands WHERE level = 1 AND band > ?2 AND band < (?1 + 1) * 100)
+       + (SELECT COALESCE(SUM(n), 0) FROM rank_bands WHERE level = 0 AND band > ?3 AND band < (?2 + 1) * 100)
+       + (SELECT COUNT(*) FROM players
+           WHERE total >= ?4 AND total < (?3 + 1) * 10
+             AND (total > ?4 OR (updated_at < ?5 OR (updated_at = ?5 AND rowid < ?6)))) AS n`,
     )
-    .bind(row.total, row.updated_at, row.rowid)
+    .bind(b2, b1, b0, t, row.updated_at, row.rowid)
     .first<{ n: number }>();
   return (ahead?.n ?? 0) + 1;
 }
 
 /** A player's total and rank, or null if there's no such player. */
-export async function standing(db: D1Database, id: string): Promise<(Standing & { row: PlayerRow }) | null> {
+export async function standing(db: D1Database, id: string): Promise<(Standing & { row: PlayerRow & RankRow }) | null> {
   const row = await db
     .prepare('SELECT rowid, emoji, adj, noun, total, updated_at FROM players WHERE id = ?1')
     .bind(id)
@@ -103,23 +122,62 @@ export async function standing(db: D1Database, id: string): Promise<(Standing & 
   return { total: row.total, rank: await rankOf(db, row), row };
 }
 
-/** `count` leaderboard entries starting at rank `from` (1-based). */
-async function slice(db: D1Database, from: number, count: number): Promise<Entry[]> {
+/** The top `count` leaderboard entries. Reads only those rows (the players_rank index is in this order). */
+async function top(db: D1Database, count: number): Promise<Entry[]> {
   const { results } = await db
-    .prepare(`SELECT emoji, adj, noun, total FROM players ORDER BY ${ORDER} LIMIT ?1 OFFSET ?2`)
-    .bind(count, from - 1)
+    .prepare(`SELECT emoji, adj, noun, total FROM players ORDER BY ${ORDER} LIMIT ?1`)
+    .bind(count)
     .all<PlayerRow>();
-  return results.map((row, i) => toEntry(row, from + i));
+  return results.map((row, i) => toEntry(row, i + 1));
 }
 
+const COLS = 'emoji, adj, noun, total';
+
+/** The player just ahead of this one: first a tie that got there earlier, else the lowest higher total. */
+async function justAhead(db: D1Database, me: RankRow): Promise<PlayerRow | null> {
+  if (me.total > 0) {
+    const tie = await db
+      .prepare(
+        `SELECT ${COLS} FROM players WHERE total = ?1 AND (updated_at < ?2 OR (updated_at = ?2 AND rowid < ?3))
+          ORDER BY updated_at DESC, rowid DESC LIMIT 1`,
+      )
+      .bind(me.total, me.updated_at, me.rowid)
+      .first<PlayerRow>();
+    if (tie) return tie;
+  }
+  return db
+    .prepare(`SELECT ${COLS} FROM players WHERE total > ?1 ORDER BY total ASC, updated_at DESC, rowid DESC LIMIT 1`)
+    .bind(me.total)
+    .first<PlayerRow>();
+}
+
+/** The player just behind this one. Nobody is behind a player on 0: they all share the last rank. */
+async function justBehind(db: D1Database, me: RankRow): Promise<PlayerRow | null> {
+  if (me.total <= 0) return null;
+  const tie = await db
+    .prepare(
+      `SELECT ${COLS} FROM players WHERE total = ?1 AND (updated_at > ?2 OR (updated_at = ?2 AND rowid > ?3))
+        ORDER BY updated_at ASC, rowid ASC LIMIT 1`,
+    )
+    .bind(me.total, me.updated_at, me.rowid)
+    .first<PlayerRow>();
+  if (tie) return tie;
+  return db
+    .prepare(`SELECT ${COLS} FROM players WHERE total < ?1 AND total > 0 ORDER BY ${ORDER} LIMIT 1`)
+    .bind(me.total)
+    .first<PlayerRow>();
+}
+
+/** The top 10, plus the player and their neighbours on either side. */
 export async function leaderboard(
   db: D1Database,
   playerId: string | null,
 ): Promise<{ top: Entry[]; me: Entry | null; near: Entry[] }> {
-  const top = await slice(db, 1, 10);
+  const best = await top(db, 10);
   const mine = playerId ? await standing(db, playerId) : null;
-  if (!mine) return { top, me: null, near: [] };
-  const from = Math.max(1, mine.rank - 1);
-  const near = await slice(db, from, mine.rank - from + 2);
-  return { top, me: toEntry(mine.row, mine.rank), near };
+  if (!mine) return { top: best, me: null, near: [] };
+  const [ahead, behind] = await Promise.all([justAhead(db, mine.row), justBehind(db, mine.row)]);
+  const me = toEntry(mine.row, mine.rank);
+  const near = [...(ahead ? [toEntry(ahead, mine.rank - 1)] : []), me, ...(behind ? [toEntry(behind, mine.rank + 1)] : [])];
+  return { top: best, me, near };
 }
