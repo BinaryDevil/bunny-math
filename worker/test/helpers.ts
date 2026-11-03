@@ -2,7 +2,7 @@ import { env } from 'cloudflare:workers';
 import { handle } from '../src/index';
 import type { PlayerName } from '../../src/lib/names';
 
-export const ORIGIN = 'https://binarydevil.github.io';
+export const ORIGIN = 'https://bunnyland.app';
 
 type CallOptions = { body?: unknown; rawBody?: string; secret?: string; origin?: string; now?: number; headers?: Record<string, string> };
 

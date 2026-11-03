@@ -19,12 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm test
       # The app itself is served by Cloudflare at bunnyland.app (npm run deploy).
       # GitHub Pages only forwards old links there.
       - run: cp redirect/index.html redirect/404.html

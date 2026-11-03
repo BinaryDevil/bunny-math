@@ -9,10 +9,10 @@ import * as db from './db';
 
 export interface Env {
   DB: D1Database;
+  /** Sites allowed to call from a browser, comma-separated. Set in wrangler.toml; unset allows none. */
   ALLOWED_ORIGINS?: string;
 }
 
-const DEFAULT_ORIGINS = 'https://bunnyland.app,https://www.bunnyland.app,https://bunnyland.bunny-api.workers.dev,https://binarydevil.github.io,http://localhost:5173,http://127.0.0.1:5173';
 const NAME_TRIES = 10;
 const MAX_CODE_LENGTH = 32;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -209,7 +209,7 @@ function withCors(request: Request, env: Env, response: Response): Response {
   const headers = new Headers(response.headers);
   headers.append('Vary', 'Origin');
   const origin = request.headers.get('Origin');
-  const allowed = (env.ALLOWED_ORIGINS ?? DEFAULT_ORIGINS).split(',').map((o) => o.trim()).filter(Boolean);
+  const allowed = (env.ALLOWED_ORIGINS ?? '').split(',').map((o) => o.trim()).filter(Boolean);
   if (origin && allowed.includes(origin)) {
     headers.set('Access-Control-Allow-Origin', origin);
     if (request.method === 'OPTIONS') {

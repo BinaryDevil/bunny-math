@@ -405,6 +405,12 @@ describe('CORS', () => {
     const gh = await handle(new Request('https://x/health', { headers: { Origin: ORIGIN } }), custom);
     expect(gh.headers.get('Access-Control-Allow-Origin')).toBeNull();
   });
+
+  it('allows no sites when ALLOWED_ORIGINS is unset', async () => {
+    const { handle } = await import('../src/index');
+    const res = await handle(new Request('https://x/health', { headers: { Origin: ORIGIN } }), { ...env, ALLOWED_ORIGINS: undefined });
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
+  });
 });
 
 describe('everything else', () => {

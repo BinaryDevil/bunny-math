@@ -60,7 +60,9 @@ The build uses relative paths, so it also works under a sub-path like `bunnyland
 
 **The leaderboard server** (`worker/`) is a separate Worker and is deployed by hand: see [worker/README.md](worker/README.md). The app finds it through `VITE_LEADERBOARD_URL` in `.env.production`.
 
-**GitHub Pages** only forwards old links now. Every push to `main` runs the tests and publishes `redirect/index.html`, which sends `binarydevil.github.io/bunny-math/…` to bunnyland.app and keeps `?code=` links working (see `.github/workflows/deploy.yml`).
+**Checks:** the `Checks` workflow (`.github/workflows/ci.yml`) runs the app's and the leaderboard server's tests on every PR and on `main`.
+
+**GitHub Pages** only forwards old links now. Every push to `main` publishes `redirect/index.html`, which sends `binarydevil.github.io/bunny-math/…` to bunnyland.app and keeps `?code=` links working (see `.github/workflows/deploy.yml`).
 
 ## Where things are
 
