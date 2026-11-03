@@ -1,0 +1,13 @@
+# The website itself: the built files in dist/, served by Cloudflare at bunnyland.app.
+# The leaderboard server is separate, in worker/.
+# Deploy with: npm run deploy
+name = "bunnyland"
+compatibility_date = "2026-10-15"
+
+routes = [
+  { pattern = "bunnyland.app", custom_domain = true },
+  { pattern = "www.bunnyland.app", custom_domain = true },
+]
+
+[assets]
+directory = "./dist"

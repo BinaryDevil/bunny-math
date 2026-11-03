@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Redirect GitHub Pages to bunnyland.app
 
 on:
   push:
@@ -25,13 +25,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: npm run build
-        env:
-          # The leaderboard server (worker/). Unset: the app works, without a leaderboard.
-          VITE_LEADERBOARD_URL: ${{ vars.VITE_LEADERBOARD_URL }}
+      # The app itself is served by Cloudflare at bunnyland.app (npm run deploy).
+      # GitHub Pages only forwards old links there.
+      - run: cp redirect/index.html redirect/404.html
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: redirect
 
   deploy:
     needs: build

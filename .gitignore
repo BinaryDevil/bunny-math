@@ -4,3 +4,5 @@ dist
 worker/node_modules
 worker/.wrangler
 *.local
+.wrangler
+redirect/404.html
