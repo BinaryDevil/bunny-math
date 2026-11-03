@@ -163,7 +163,7 @@ function subBlocks({ a, b, c }: Fact): Step[] {
 /** Skip-counting list: "4, 8, 12" or "4, 8, 12 … 36". */
 function countBy(step: number, times: number) {
   const all = Array.from({ length: times }, (_, i) => step * (i + 1));
-  const shown = times > 5 ? [...all.slice(0, 3), '…', all.at(-1)] : all;
+  const shown = times > 5 ? [...all.slice(0, 3), '…', all[all.length - 1]] : all;
   return shown.map((n, i) => (i === shown.length - 1 ? `*${n}*` : n)).join(', ').replace(', …,', ' …');
 }
 

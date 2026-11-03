@@ -1,12 +1,10 @@
 import { tn, useT, type Lang } from '../i18n';
 import { levelsFor, MODES } from '../lib/generator';
 import { sounds } from '../lib/sound';
-import type { Saved } from '../lib/storage';
+import { LENGTHS, type Saved } from '../lib/storage';
 import type { LevelId, Mode } from '../lib/types';
 import { Bunny } from './Bunny';
 import { LangPicker } from './LangPicker';
-
-export const LENGTHS = [10, 15, 20];
 
 type Props = {
   saved: Saved;

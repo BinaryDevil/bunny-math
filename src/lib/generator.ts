@@ -177,8 +177,9 @@ function level6(r: Rng, op: PM): Fact {
   for (let i = 0; i < 200; i++) {
     if (op === '-' && r.chance(0.35)) {
       const o = r.int(0, 7);
-      const a = 100 * r.int(2, 9) + o;
-      const b = 100 * r.int(1, Math.floor(a / 100) - 1) + 10 * r.int(1, 9) + r.int(o + 1, 9);
+      // b's hundreds stay at least 2 below a's, so the answer is still a three-digit number.
+      const a = 100 * r.int(3, 9) + o;
+      const b = 100 * r.int(1, Math.floor(a / 100) - 2) + 10 * r.int(1, 9) + r.int(o + 1, 9);
       return sub(a, b);
     }
     const a = r.int(op === '+' ? 101 : 301, op === '+' ? 799 : 999);

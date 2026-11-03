@@ -25,7 +25,8 @@ function play(fn: () => void) {
   if (!enabled) return;
   try {
     ctx ??= new AudioContext();
-    if (ctx.state === 'suspended') void ctx.resume();
+    // iOS reports 'interrupted' after a call or a trip to the home screen, not only 'suspended'.
+    if (ctx.state !== 'running') void ctx.resume();
     fn();
   } catch {
     // Audio not available: stay quiet.

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { explain } from '../lib/explain';
 import { generateQuiz, LEVELS } from '../lib/generator';
 import { en } from './en';
-import { activate, detectLang, LANGS, list, MESSAGES, t, tn } from './index';
+import { activate, detectLang, glueNumbers, LANGS, list, MESSAGES, t, tn } from './index';
 
 /** The set of {placeholders}; a translation may use one twice ("de {b} en {b}"). */
 const placeholders = (msg: string) => [...new Set([...msg.matchAll(/\{(\w+)\}/g)].map((m) => m[1]))].sort();
@@ -66,6 +66,11 @@ describe('t and friends', () => {
     // Languages with spaces are left alone.
     activate('de');
     expect(t('story.birds.text', { a: 9, b: 4 })).not.toContain(WJ);
+  });
+
+  it('glues numbers without regex lookbehind, which stops the app loading on Safari before 16.4', () => {
+    expect(glueNumbers.toString()).not.toMatch(/\(\?<[=!]/);
+    expect(glueNumbers('a1b *2* 3c')).toBe('a\u20601\u2060b *2* 3\u2060c');
   });
 
   it('picks plural forms', () => {

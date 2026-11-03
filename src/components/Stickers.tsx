@@ -20,7 +20,7 @@ export function Stickers({ owned, onBack }: { owned: string[]; onBack: () => voi
                 {s}
               </div>
             ) : (
-              <div key={s} class="sticker empty" aria-label={t('book.empty')}>
+              <div key={s} class="sticker empty" role="img" aria-label={t('book.empty')}>
                 ?
               </div>
             ),

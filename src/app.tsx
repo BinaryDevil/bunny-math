@@ -16,7 +16,7 @@ import type { LevelId, Mode, Question, Skill } from './lib/types';
 type Screen =
   | { name: 'mode' }
   | { name: 'home' }
-  | { name: 'quiz'; questions: Question[]; key: number }
+  | { name: 'quiz'; questions: Question[]; key: number; practice: boolean }
   | { name: 'results'; result: QuizResult; sticker: string | null }
   | { name: 'stickers' }
   | { name: 'print' };
@@ -59,16 +59,16 @@ export function App() {
   function startQuiz(opts: { level?: LevelId; skills?: Skill[]; count?: number } = {}) {
     const seed = screen.name === 'home' && urlSeed && !opts.skills ? urlSeed : randomSeed();
     const questions = generateQuiz({ level: opts.level ?? level, count: opts.count ?? saved.length, seed, skills: opts.skills });
-    setScreen({ name: 'quiz', questions, key: seed });
+    setScreen({ name: 'quiz', questions, key: seed, practice: !!opts.skills });
   }
 
-  function finish(result: QuizResult) {
+  function finish(result: QuizResult, practice: boolean) {
     const right = result.questions.filter((q) => result.firstTry[q.id]).length;
     const stars = starsFor(right, result.questions.length);
     const unowned = STICKERS.filter((s) => !saved.stickers.includes(s));
     const sticker = unowned.length ? unowned[Math.floor(Math.random() * unowned.length)] : null;
-    // Practice rounds are shorter, so they don't count towards the level's best.
-    const isFullQuiz = result.questions.length === saved.length;
+    // "Practice more" rounds only ask the skills that were missed, so they don't count towards the level's best.
+    const isFullQuiz = !practice;
     setSaved((s) => ({
       ...s,
       stickers: sticker ? [...s.stickers, sticker] : s.stickers,
@@ -109,7 +109,7 @@ export function App() {
           />
         );
       case 'quiz':
-        return <Quiz key={screen.key} questions={screen.questions} onDone={finish} onQuit={() => setScreen({ name: 'home' })} />;
+        return <Quiz key={screen.key} questions={screen.questions} onDone={(r) => finish(r, screen.practice)} onQuit={() => setScreen({ name: 'home' })} />;
       case 'results':
         return (
           <Results

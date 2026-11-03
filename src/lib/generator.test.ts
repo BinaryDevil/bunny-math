@@ -15,6 +15,13 @@ function facts(level: LevelId, ops: Op[] = ['+', '-']) {
 }
 
 describe('sums stay at the right difficulty', () => {
+  it('level 6 answers are always three-digit numbers, even when borrowing across a zero', () => {
+    for (const f of facts(6)) {
+      expect(f.c).toBeGreaterThanOrEqual(100);
+      expect(f.c).toBeLessThanOrEqual(999);
+    }
+  });
+
   it('all levels: no negatives, no +0/−0, no answers over 99, sums add up', () => {
     for (const level of [1, 2, 3, 4] as const) {
       for (const f of facts(level)) {

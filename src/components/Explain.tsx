@@ -1,5 +1,5 @@
 import { createContext, Fragment } from 'preact';
-import { useContext, useEffect, useMemo, useState } from 'preact/hooks';
+import { useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { useLang, useT, type MessageKey } from '../i18n';
 import { explain, questionText, type Group, type Piece, type Scene } from '../lib/explain';
 import { sounds } from '../lib/sound';
@@ -150,12 +150,33 @@ export function ExplainSheet({ question, onClose }: { question: Question; onClos
   useEffect(() => setCur(0), [style]);
   const last = cur === steps.length - 1;
 
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const nextRef = useRef<HTMLButtonElement>(null);
+
+  // Move keyboard focus into the sheet when it opens, and give it back when it closes.
+  useEffect(() => {
+    const before = document.activeElement as HTMLElement | null;
+    nextRef.current?.focus();
+    return () => {
+      if (before?.isConnected) before.focus();
+    };
+  }, []);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowRight' || e.key === 'Enter') (last ? onClose() : setCur((c) => c + 1));
-      if (e.key === 'ArrowLeft') setCur((c) => Math.max(0, c - 1));
       e.stopPropagation();
+      if (e.key === 'Escape') return onClose();
+      if (e.key === 'Tab') return trapTab(e, sheetRef.current);
+      // A focused button already answers Enter with a click; acting here too would skip a step.
+      if (e.key === 'Enter' && e.target instanceof Element && e.target.closest('button')) return;
+      if (e.key === 'ArrowRight' || e.key === 'Enter') {
+        e.preventDefault();
+        last ? onClose() : setCur((c) => c + 1);
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setCur((c) => Math.max(0, c - 1));
+      }
     };
     addEventListener('keydown', onKey, true);
     return () => removeEventListener('keydown', onKey, true);
@@ -169,7 +190,7 @@ export function ExplainSheet({ question, onClose }: { question: Question; onClos
 
   return (
     <div class="scrim" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div class="sheet" role="dialog" aria-modal="true" aria-label={t('sheet.aria', { q: questionText(question) })}>
+      <div class="sheet" ref={sheetRef} role="dialog" aria-modal="true" aria-label={t('sheet.aria', { q: questionText(question) })}>
         <div class="sheet-head">
           <p class="sheet-title">{questionText(question).replace(/-/g, '−')}</p>
           <div class="seg style-pick" role="radiogroup" aria-label={t('sheet.showWith')}>
@@ -204,11 +225,30 @@ export function ExplainSheet({ question, onClose }: { question: Question; onClos
           <button class="puffy" style={{ visibility: cur ? 'visible' : 'hidden' }} onClick={() => go(-1)}>
             {t('sheet.back')}
           </button>
-          <button class="puffy berry" onClick={() => go(1)}>
+          <button class="puffy berry" ref={nextRef} onClick={() => go(1)}>
             {t(last ? 'sheet.gotIt' : 'sheet.next')}
           </button>
         </div>
       </div>
     </div>
   );
+}
+
+/** Keeps Tab and Shift+Tab inside a modal, so keyboard users can't wander behind it. */
+export function trapTab(e: KeyboardEvent, box: HTMLElement | null) {
+  if (!box) return;
+  const all = [...box.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')].filter(
+    (el) => el.style.visibility !== 'hidden',
+  );
+  if (!all.length) return;
+  const first = all[0];
+  const lastEl = all[all.length - 1];
+  const inside = box.contains(document.activeElement);
+  if (e.shiftKey && (document.activeElement === first || !inside)) {
+    e.preventDefault();
+    lastEl.focus();
+  } else if (!e.shiftKey && (document.activeElement === lastEl || !inside)) {
+    e.preventDefault();
+    first.focus();
+  }
 }

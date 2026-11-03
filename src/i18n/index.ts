@@ -102,7 +102,8 @@ const NO_SPACES = new Set<Lang>(['zh-CN', 'zh-TW', 'ja', 'ko']);
  * Puts an invisible word joiner (U+2060) between a number and a letter right next to it, so a
  * number never wraps away from its counter word ("442 / こ"). `*` highlight marks are looked through.
  */
-export const glueNumbers = (s: string) => s.replace(/(?<=\p{L}\*?)(?=\d)|(?<=\d)(?=\*?\p{L})/gu, '⁠');
+// No lookbehind here: Safari before 16.4 can't parse it, and one bad regex stops the whole app loading.
+export const glueNumbers = (s: string) => s.replace(/(\p{L}\*?)(?=\d)/gu, '$1\u2060').replace(/(\d)(?=\*?\p{L})/gu, '$1\u2060');
 
 const pluralRules = new Map<Lang, Intl.PluralRules>();
 /** A message that depends on a count, e.g. tn('unit.ten', 3) → "3 tens". `{n}` is filled in automatically. */

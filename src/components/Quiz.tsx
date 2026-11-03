@@ -193,10 +193,24 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
   // Keyboard support for laptops and tablets with keyboards.
   const keyRef = useRef<(e: KeyboardEvent) => void>(null);
   keyRef.current = (e: KeyboardEvent) => {
-    if (explaining || quitting) return;
+    if (explaining) return;
+    if (quitting) {
+      if (e.key === 'Escape') setQuitting(false);
+      return;
+    }
+    if (e.key === 'Enter') {
+      // A focused button (Show me how, Next, Try again…) answers Enter itself with a click.
+      // Keypad keys are the exception: Enter there means "check", not "press 7 again".
+      const btn = e.target instanceof Element ? e.target.closest('button') : null;
+      if (btn && !btn.closest('.pad')) return;
+      e.preventDefault();
+    }
     if (status === 'ask') {
-      if (usesPad && /^[0-9]$/.test(e.key)) press(e.key);
-      else if (usesPad && e.key === 'Backspace') press('back');
+      if (usesPad && /^[0-9]$/.test(e.key)) {
+        // Typing an answer moves on from a focused "Show me how" (e.g. after closing it), so Enter then checks.
+        if (e.target instanceof HTMLElement && e.target.closest('button') && !e.target.closest('.pad')) e.target.blur();
+        press(e.key);
+      } else if (usesPad && e.key === 'Backspace') press('back');
       else if (usesPad && e.key === 'Enter' && input) submit(Number(input));
       else if (q.kind === 'compare' && SIGNS.includes(e.key as CompareSign)) submit(e.key as CompareSign);
       else if (q.kind === 'choice' && /^[1-4]$/.test(e.key)) submit(q.choices[Number(e.key) - 1]);
