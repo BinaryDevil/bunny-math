@@ -1,4 +1,5 @@
-name = "bunny-math-leaderboard"
+# One server and one database for every Bunny game: players and their names are shared.
+name = "bunny-api"
 main = "src/index.ts"
 compatibility_date = "2026-10-15"
 
@@ -8,6 +9,6 @@ ALLOWED_ORIGINS = "https://binarydevil.github.io,http://localhost:5173,http://12
 
 [[d1_databases]]
 binding = "DB"
-database_name = "bunny-math-leaderboard"
+database_name = "bunny-collection"
 database_id = "REPLACE_WITH_YOUR_D1_ID"
 migrations_dir = "migrations"

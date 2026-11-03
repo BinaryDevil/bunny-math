@@ -1,4 +1,7 @@
-# Bunny Math leaderboard server
+# Bunny API
+
+The server for the Bunny games, starting with Bunny Math. One Worker and one database
+(`bunny-collection`) serve them all, so a player keeps one name across every game.
 
 A Cloudflare Worker with a D1 (SQLite) database. It keeps each player's all-time carrot total
 and serves the leaderboard. The app calls it from the browser.
@@ -9,10 +12,10 @@ Run these in this `worker/` folder.
 
 1. `npm install`
 2. `npx wrangler login` (opens a browser to sign in to Cloudflare)
-3. `npx wrangler d1 create bunny-math-leaderboard`, then copy the `database_id` it prints into
+3. `npx wrangler d1 create bunny-collection`, then copy the `database_id` it prints into
    `wrangler.toml`, in place of `REPLACE_WITH_YOUR_D1_ID`.
 4. `npm run db:migrate` (creates the tables)
-5. `npm run deploy`. It prints the Worker's URL, like `https://bunny-math-leaderboard.<you>.workers.dev`.
+5. `npm run deploy`. It prints the Worker's URL, like `https://bunny-api.<you>.workers.dev`.
 6. In the GitHub repo, go to **Settings → Secrets and variables → Actions → Variables** and add
    a variable `VITE_LEADERBOARD_URL` set to that URL. The app's build reads it.
 
@@ -26,7 +29,7 @@ browsers on the new site can't reach the server.
 
 - `npm test` runs the tests in the Workers runtime with a local D1. No Cloudflare account needed.
 - `npm run typecheck`
-- `npx wrangler d1 migrations apply bunny-math-leaderboard --local`, then `npm run dev`, runs the
+- `npx wrangler d1 migrations apply bunny-collection --local`, then `npm run dev`, runs the
   server at `http://localhost:8787` with a local database.
 
 ## API

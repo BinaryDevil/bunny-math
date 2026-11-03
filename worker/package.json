@@ -1,5 +1,5 @@
 {
-  "name": "bunny-math-leaderboard",
+  "name": "bunny-api",
   "private": true,
   "type": "module",
   "scripts": {
@@ -7,7 +7,7 @@
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json",
     "deploy": "wrangler deploy",
-    "db:migrate": "wrangler d1 migrations apply bunny-math-leaderboard --remote"
+    "db:migrate": "wrangler d1 migrations apply bunny-collection --remote"
   },
   "devDependencies": {
     "@cloudflare/vitest-plugin": "1.4.6",
