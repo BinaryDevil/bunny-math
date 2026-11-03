@@ -8,22 +8,28 @@ and serves the leaderboard. The app calls it from the browser.
 
 ## Deploy
 
-Run these in this `worker/` folder.
+It's live at `https://bunny-api.bunny-api.workers.dev`, with the `bunny-collection` database
+already made. Unlike the site, it isn't deployed automatically: after changing it, run these in
+this `worker/` folder.
 
-1. `npm install`
-2. `npx wrangler login` (opens a browser to sign in to Cloudflare)
-3. `npx wrangler d1 create bunny-collection`, then copy the `database_id` it prints into
-   `wrangler.toml`, in place of `REPLACE_WITH_YOUR_D1_ID`.
-4. `npm run db:migrate` (creates the tables)
-5. `npm run deploy`. It prints the Worker's URL, like `https://bunny-api.<you>.workers.dev`.
-6. In the GitHub repo, go to **Settings → Secrets and variables → Actions → Variables** and add
-   a variable `VITE_LEADERBOARD_URL` set to that URL. The app's build reads it.
+1. `npm install`, and `npx wrangler login` once (opens a browser to sign in to Cloudflare)
+2. `npm run db:migrate` if you added a file to `migrations/`
+3. `npm run deploy`
 
 Check it's up: open `<worker URL>/health`; it should say `{"ok":true}`.
 
-**If the site moves** to a different address, add the new origin (like `https://example.com`, no
-trailing slash) to `ALLOWED_ORIGINS` in `wrangler.toml` and run `npm run deploy` again. Otherwise
-browsers on the new site can't reach the server.
+The app finds the server through `VITE_LEADERBOARD_URL` in the root `.env.production`. Change it
+there if the server's address ever changes.
+
+**Sites allowed to call it** are listed in `ALLOWED_ORIGINS` in `wrangler.toml` (now bunnyland.app,
+www.bunnyland.app, the old GitHub Pages address, and localhost). When a game moves to a new
+address, add its origin (like `https://example.com`, no trailing slash) and run `npm run deploy`
+again. Otherwise browsers on the new site can't reach the server. Games under bunnyland.app paths,
+like `bunnyland.app/music/`, share the `https://bunnyland.app` origin and need nothing new.
+
+**Starting over on another Cloudflare account:** run `npx wrangler d1 create bunny-collection`,
+put the `database_id` it prints into `wrangler.toml`, then follow the steps above. Point
+`VITE_LEADERBOARD_URL` at the URL `npm run deploy` prints.
 
 ## Develop
 
