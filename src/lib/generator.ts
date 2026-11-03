@@ -1,24 +1,26 @@
 import { makeRng, type Rng } from './rng';
 import type { Answer, CompareSign, Fact, Kind, LevelId, Mode, Op, Question, Skill, Story } from './types';
 
-export type Level = { id: LevelId; mode: Mode; name: string; example: string; blurb: string };
+/** Level names and blurbs are translated: `level.<id>.name` and `level.<id>.blurb`. */
+export type Level = { id: LevelId; mode: Mode; example: string };
 
-export const MODES: Record<Mode, { name: string; signs: string; blurb: string }> = {
-  plus: { name: 'Add & take away', signs: '+ −', blurb: 'Adding and taking away, up to 3 digits' },
-  all: { name: 'All four', signs: '+ − × ÷', blurb: 'Times tables and dividing too' },
+/** Mode names and blurbs are translated: `mode.<mode>.name` and `mode.<mode>.blurb`. */
+export const MODES: Record<Mode, { signs: string }> = {
+  plus: { signs: '+ −' },
+  all: { signs: '+ − × ÷' },
 };
 
 export const LEVELS: readonly Level[] = [
-  { id: 1, mode: 'plus', name: 'Warm-up', example: '7 + 8', blurb: 'Within 20' },
-  { id: 2, mode: 'plus', name: 'Big + small', example: '34 + 5', blurb: 'No carrying' },
-  { id: 3, mode: 'plus', name: 'Tricky ones', example: '38 + 7', blurb: 'Carry and borrow' },
-  { id: 4, mode: 'plus', name: 'Double digits', example: '46 + 37', blurb: 'Two-digit numbers' },
-  { id: 5, mode: 'plus', name: 'Hundreds', example: '325 + 148', blurb: 'Three-digit numbers' },
-  { id: 6, mode: 'plus', name: 'Super sums', example: '503 − 167', blurb: 'Lots of carrying' },
-  { id: 11, mode: 'all', name: 'First tables', example: '5 × 3', blurb: 'Tables of 2, 5 and 10' },
-  { id: 12, mode: 'all', name: 'More tables', example: '4 × 6', blurb: 'Tables up to 5' },
-  { id: 13, mode: 'all', name: 'All tables', example: '7 × 8', blurb: 'Tables up to 10' },
-  { id: 14, mode: 'all', name: 'Big times', example: '23 × 4', blurb: 'Two-digit times and divide' },
+  { id: 1, mode: 'plus', example: '7 + 8' },
+  { id: 2, mode: 'plus', example: '34 + 5' },
+  { id: 3, mode: 'plus', example: '38 + 7' },
+  { id: 4, mode: 'plus', example: '46 + 37' },
+  { id: 5, mode: 'plus', example: '325 + 148' },
+  { id: 6, mode: 'plus', example: '503 − 167' },
+  { id: 11, mode: 'all', example: '5 × 3' },
+  { id: 12, mode: 'all', example: '4 × 6' },
+  { id: 13, mode: 'all', example: '7 × 8' },
+  { id: 14, mode: 'all', example: '23 × 4' },
 ];
 
 export const levelOf = (id: LevelId) => LEVELS.find((l) => l.id === id) ?? LEVELS[0];
@@ -33,15 +35,16 @@ export function nextLevel(id: LevelId): LevelId | null {
 const OPS: Record<Mode, Op[]> = { plus: ['+', '-'], all: ['×', '÷', '+', '×', '÷', '-'] };
 export const opsFor = (level: LevelId) => OPS[levelOf(level).mode];
 
-export const SKILL_LABELS: Record<Skill, { icon: string; label: string }> = {
-  add20: { icon: '➕', label: 'Adding to 20' },
-  sub20: { icon: '➖', label: 'Taking away to 20' },
-  add: { icon: '➕', label: 'Adding' },
-  sub: { icon: '➖', label: 'Taking away' },
-  carry: { icon: '🧱', label: 'Carrying a ten' },
-  borrow: { icon: '🔨', label: 'Breaking a ten' },
-  times: { icon: '✖️', label: 'Times' },
-  divide: { icon: '➗', label: 'Dividing' },
+/** Skill names are translated: `skill.<skill>`. */
+export const SKILL_ICONS: Record<Skill, string> = {
+  add20: '➕',
+  sub20: '➖',
+  add: '➕',
+  sub: '➖',
+  carry: '🧱',
+  borrow: '🔨',
+  times: '✖️',
+  divide: '➗',
 };
 
 /** The digit in a place: 0 = ones, 1 = tens, 2 = hundreds. */
@@ -234,38 +237,38 @@ export function makeFact(r: Rng, level: LevelId, op: Op = r.pick(opsFor(level)))
 
 /* ---------- Question formats ---------- */
 
-type StoryFn = (a: number, b: number) => Story;
-const STORIES: Record<Op, StoryFn[]> = {
+/** Stories for each sign. The text is looked up when shown, so it follows the chosen language. */
+const STORIES: Record<Op, Story[]> = {
   '+': [
-    (a, b) => ({ emoji: '🐠', text: `${a} fish in the tank. ${b} more swim in.`, ask: 'How many now?' }),
-    (a, b) => ({ emoji: '🌸', text: `${a} flowers in the garden. ${b} more grow.`, ask: 'How many now?' }),
-    (a, b) => ({ emoji: '🍪', text: `${a} cookies in the jar. You bake ${b} more.`, ask: 'How many now?' }),
-    (a, b) => ({ emoji: '⭐', text: `You have ${a} stickers. You get ${b} more.`, ask: 'How many now?' }),
-    (a, b) => ({ emoji: '🐞', text: `${a} ladybugs on a leaf. ${b} more land.`, ask: 'How many now?' }),
+    { emoji: '🐠', id: 'fish' },
+    { emoji: '🌸', id: 'flowers' },
+    { emoji: '🍪', id: 'cookies' },
+    { emoji: '⭐', id: 'stickers' },
+    { emoji: '🐞', id: 'ladybugs' },
   ],
   '-': [
-    (a, b) => ({ emoji: '🍓', text: `${a} strawberries in a bowl. You eat ${b}.`, ask: 'How many are left?' }),
-    (a, b) => ({ emoji: '🎈', text: `${a} balloons at the party. ${b} go pop!`, ask: 'How many are left?' }),
-    (a, b) => ({ emoji: '🐦', text: `${a} birds in a tree. ${b} fly away.`, ask: 'How many are left?' }),
-    (a, b) => ({ emoji: '🧁', text: `${a} cupcakes on a plate. Friends eat ${b}.`, ask: 'How many are left?' }),
-    (a, b) => ({ emoji: '🦋', text: `${a} butterflies in the garden. ${b} fly off.`, ask: 'How many are left?' }),
+    { emoji: '🍓', id: 'strawberries' },
+    { emoji: '🎈', id: 'balloons' },
+    { emoji: '🐦', id: 'birds' },
+    { emoji: '🧁', id: 'cupcakes' },
+    { emoji: '🦋', id: 'butterflies' },
   ],
   '×': [
-    (a, b) => ({ emoji: '🍪', text: `${a} plates with ${b} cookies on each.`, ask: 'How many cookies?' }),
-    (a, b) => ({ emoji: '🌷', text: `${a} pots with ${b} flowers in each.`, ask: 'How many flowers?' }),
-    (a, b) => ({ emoji: '🐰', text: `${a} bunnies each eat ${b} carrots.`, ask: 'How many carrots?' }),
-    (a, b) => ({ emoji: '🎁', text: `${a} bags with ${b} sweets in each.`, ask: 'How many sweets?' }),
+    { emoji: '🍪', id: 'plates' },
+    { emoji: '🌷', id: 'pots' },
+    { emoji: '🐰', id: 'bunnies' },
+    { emoji: '🎁', id: 'bags' },
   ],
   '÷': [
-    (a, b) => ({ emoji: '🍓', text: `${a} strawberries shared by ${b} friends.`, ask: 'How many each?' }),
-    (a, b) => ({ emoji: '🧁', text: `${a} cupcakes go in boxes of ${b}.`, ask: 'How many boxes?' }),
-    (a, b) => ({ emoji: '🐟', text: `${a} fish, with ${b} in each tank.`, ask: 'How many tanks?' }),
-    (a, b) => ({ emoji: '🌸', text: `${a} flowers in ${b} equal bunches.`, ask: 'How many in each?' }),
+    { emoji: '🍓', id: 'share' },
+    { emoji: '🧁', id: 'boxes' },
+    { emoji: '🐟', id: 'tanks' },
+    { emoji: '🌸', id: 'bunches' },
   ],
 };
 
 function makeStory(r: Rng, f: Fact): Story {
-  return r.pick(STORIES[f.op])(f.a, f.b);
+  return r.pick(STORIES[f.op]);
 }
 
 /** Taking the smaller digit from the bigger one in every column, a very common slip. */

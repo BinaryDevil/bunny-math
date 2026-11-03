@@ -6,6 +6,7 @@ import { Quiz, type QuizResult } from './components/Quiz';
 import { Results, starsFor } from './components/Results';
 import { Stickers } from './components/Stickers';
 import { Worksheet } from './components/Worksheet';
+import { activate, browserLangs, detectLang, LangContext, t, type Lang } from './i18n';
 import { generateQuiz, nextLevel } from './lib/generator';
 import { randomSeed } from './lib/rng';
 import { setSound } from './lib/sound';
@@ -27,6 +28,12 @@ export function App() {
   const [saved, setSaved] = useState<Saved>(load);
   // First visit: choose what to practice before anything else.
   const [screen, setScreen] = useState<Screen>(() => ({ name: saved.mode ? 'home' : 'mode' }));
+  // Follow the browser's language until the child picks one. The detected language is never
+  // saved, so changing the device language later still works until a manual pick.
+  const [detected, setDetected] = useState<Lang>(() => detectLang(browserLangs()));
+  const lang = saved.lang ?? detected;
+  // Set before the children render, so every t() call below uses the new language.
+  activate(lang);
   const mode: Mode = saved.mode ?? 'plus';
   const level = saved.levelFor[mode];
 
@@ -34,6 +41,17 @@ export function App() {
     save(saved);
     setSound(saved.sound);
   }, [saved]);
+
+  useEffect(() => {
+    const onChange = () => setDetected(detectLang(browserLangs()));
+    addEventListener('languagechange', onChange);
+    return () => removeEventListener('languagechange', onChange);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    document.title = t('app.name');
+  }, [lang]);
 
   const update = (patch: Partial<Saved>) => setSaved((s) => ({ ...s, ...patch }));
   const setLevel = (l: LevelId) => setSaved((s) => ({ ...s, levelFor: { ...s.levelFor, [mode]: l } }));
@@ -66,6 +84,8 @@ export function App() {
         return (
           <ModePick
             current={saved.mode}
+            lang={lang}
+            onLang={(l) => update({ lang: l })}
             onPick={(m) => {
               update({ mode: m });
               setScreen({ name: 'home' });
@@ -78,6 +98,8 @@ export function App() {
             saved={saved}
             mode={mode}
             level={level}
+            lang={lang}
+            onLang={(l) => update({ lang: l })}
             onLevel={setLevel}
             onChange={update}
             onStart={() => startQuiz()}
@@ -111,5 +133,9 @@ export function App() {
     }
   })();
 
-  return <ExplainPref.Provider value={{ style: saved.explain, setStyle: (explain) => update({ explain }) }}>{body}</ExplainPref.Provider>;
+  return (
+    <LangContext.Provider value={lang}>
+      <ExplainPref.Provider value={{ style: saved.explain, setStyle: (explain) => update({ explain }) }}>{body}</ExplainPref.Provider>
+    </LangContext.Provider>
+  );
 }

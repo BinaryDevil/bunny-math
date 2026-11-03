@@ -21,10 +21,23 @@
   --r-lg: 28px;
   --r-md: 20px;
 
-  --display: "Mochiy Pop One", "Baloo 2", system-ui, sans-serif;
-  --body: "Baloo 2", system-ui, sans-serif;
+  /*
+   * The web fonts only cover Latin letters (and digits), so Chinese, Japanese and Korean
+   * fall through to a rounded system font for that script. <html lang> picks the right one.
+   */
+  --cjk: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", "Source Han Sans SC";
+  --display: "Mochiy Pop One", "Baloo 2", var(--cjk), system-ui, sans-serif;
+  --body: "Baloo 2", var(--cjk), system-ui, sans-serif;
 
   color-scheme: light;
+}
+
+:root:lang(zh-TW) { --cjk: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", "Noto Sans CJK TC", "Source Han Sans TC"; }
+:root:lang(ja) { --cjk: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans JP", "Noto Sans CJK JP"; }
+:root:lang(ko) { --cjk: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "Noto Sans CJK KR"; }
+/* The display font is a chunky one; system CJK fonts at weight 400 look thin next to it. */
+:root:is(:lang(zh), :lang(ja), :lang(ko)) :is(.title, .mode-title, .mode-name, .start, .fb-title, .dialog h2, .cheer, .score, .panel h2, .book-title, .ws-title, .caption, .caption b, .sheet-title) {
+  font-weight: 700;
 }
 
 * { box-sizing: border-box; }
@@ -57,7 +70,9 @@ h1, h2, p { margin: 0; }
   box-shadow: 0 var(--press) 0 var(--ink);
   transition: transform .06s, box-shadow .06s;
   font-weight: 800;
-  white-space: nowrap;
+  line-height: 1.15;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 .puffy:active:not(:disabled) { transform: translateY(calc(var(--press) - 2px)); box-shadow: 0 2px 0 var(--ink); }
 .puffy.berry { background: var(--berry); color: #fff; }
@@ -137,6 +152,7 @@ h1, h2, p { margin: 0; }
 }
 .review-tag {
   position: absolute; top: -16px; left: 50%; transform: translateX(-50%) rotate(-2deg);
+  white-space: nowrap;
   background: var(--butter); border: 2.5px solid var(--ink); border-radius: 999px;
   padding: 0 14px; font-weight: 800; font-size: 16px;
 }
@@ -217,7 +233,7 @@ h1, h2, p { margin: 0; }
   font-variant-numeric: tabular-nums;
 }
 .signs { grid-template-columns: repeat(3, 1fr); }
-.choice small { display: block; font-size: 15px; font-weight: 700; color: var(--ink-soft); line-height: 1; }
+.choice small { display: block; font-size: 15px; font-weight: 700; color: var(--ink-soft); line-height: 1.1; }
 .choice.picked-wrong { background: var(--peach-soft); border-color: var(--ink-soft); color: var(--ink-soft); box-shadow: 0 2px 0 var(--ink-soft); text-decoration: line-through; text-decoration-thickness: 4px; }
 .choice.picked-right { background: var(--mint); }
 
@@ -234,7 +250,7 @@ h1, h2, p { margin: 0; }
 .feedback.good { background: var(--mint-soft); }
 .feedback.bad { background: var(--peach-soft); }
 .fb-face { width: 64px; aspect-ratio: 120/130; flex: none; }
-.fb-text { flex: 1; min-width: 180px; }
+.fb-text { flex: 1; min-width: 180px; overflow-wrap: break-word; }
 .fb-title { font-family: var(--display); font-size: clamp(20px, 3.4dvh, 28px); }
 .fb-sub { font-weight: 700; font-size: 20px; }
 .fb-actions { display: flex; gap: 12px; }
@@ -256,6 +272,7 @@ h1, h2, p { margin: 0; }
 }
 .sheet-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .sheet-title { font-family: var(--display); font-size: 22px; flex: 1; white-space: nowrap; }
+.sheet-foot .puffy { white-space: nowrap; }
 .style-pick button { padding: 4px 14px; font-size: 17px; min-height: 44px; }
 @media (max-width: 600px) {
   .style-pick { order: 3; flex-basis: 100%; }
@@ -418,7 +435,7 @@ h1, h2, p { margin: 0; }
   background: var(--berry); color: #fff; border: var(--line) solid var(--ink);
   font-weight: 800;
 }
-.lv-name { display: block; font-weight: 800; font-size: clamp(18px, 2.8dvh, 24px); }
+.lv-name { display: block; font-weight: 800; font-size: clamp(18px, 2.8dvh, 24px); line-height: 1.15; overflow-wrap: break-word; hyphens: auto; padding-right: 14px; /* room for the ✓ badge */ }
 .lv-eg { display: block; white-space: nowrap; font-weight: 700; font-size: clamp(22px, 3.6dvh, 32px); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 .lv-stars { position: absolute; right: 12px; bottom: 8px; font-size: 14px; letter-spacing: -2px; }
 .length { display: flex; align-items: center; gap: 12px; justify-content: center; font-weight: 700; font-size: 20px; }
@@ -428,14 +445,30 @@ h1, h2, p { margin: 0; }
 .seg button[aria-checked="true"] { background: var(--butter); }
 .start { height: clamp(60px, 9dvh, 84px); font-family: var(--display); font-size: clamp(24px, 4dvh, 34px); font-weight: 400; }
 
-.mode-btn { height: 48px; padding: 0 16px; border-radius: 999px; font-size: 22px; --press: 4px; color: var(--berry); }
+/* Language picker: a pill with a real, invisible <select> on top. */
+.lang-pick {
+  position: relative; flex: none;
+  height: 48px; padding: 0 12px;
+  display: inline-flex; align-items: center; gap: 4px;
+  border-radius: 999px; font-size: 20px; --press: 4px;
+}
+.lang-short { font-size: 15px; font-weight: 800; color: var(--ink-soft); }
+.lang-pick select {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  opacity: 0; cursor: pointer; font-size: 16px; /* 16px stops iOS zooming in */
+  appearance: none; border: 0;
+}
+.lang-pick:focus-within { outline: 4px solid var(--lilac); outline-offset: 3px; }
+.lang-pick:active { transform: translateY(calc(var(--press) - 2px)); box-shadow: 0 2px 0 var(--ink); }
+
+.mode-btn { height: 48px; white-space: nowrap; padding: 0 16px; border-radius: 999px; font-size: 22px; --press: 4px; color: var(--berry); }
 .mode-btn span { color: var(--ink-soft); font-size: 14px; }
 
 /* ---------- Mode picker ---------- */
 .mode-body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: clamp(16px, 4dvh, 40px); }
-.mode-hero { display: flex; align-items: center; gap: 16px; }
+.mode-hero { display: flex; align-items: center; gap: 16px; max-width: 100%; }
 .mode-hero .bunny { width: clamp(72px, 14dvh, 140px); aspect-ratio: 120/130; flex: none; }
-.mode-title { font-family: var(--display); font-weight: 400; font-size: clamp(26px, 5dvh, 44px); line-height: 1.15; }
+.mode-title { font-family: var(--display); font-weight: 400; font-size: clamp(26px, 5dvh, 44px); line-height: 1.15; min-width: 0; overflow-wrap: break-word; hyphens: auto; }
 .modes { display: grid; gap: 24px; width: min(100%, 880px); }
 .mode-card {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -491,6 +524,7 @@ h1, h2, p { margin: 0; }
 .qgrid button.x { background: var(--peach); }
 .skills { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .skills li { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; }
+.skill-name { min-width: 0; overflow-wrap: break-word; }
 .skill-count { margin-left: auto; color: var(--ink-soft); font-size: 16px; font-variant-numeric: tabular-nums; }
 .chip { padding: 2px 12px; border-radius: 999px; border: 2px solid var(--ink); font-size: 15px; font-weight: 800; white-space: nowrap; }
 .chip.great { background: var(--butter); }
@@ -587,9 +621,26 @@ h1, h2, p { margin: 0; }
   .levels { gap: 8px; }
   .level { margin: 6px; padding: 8px 12px; }
   .levels.n6 .level { padding: 5px 10px; margin: 5px; }
-  .levels.n6 .lv-name { font-size: 16px; white-space: nowrap; }
+  .levels.n6 .lv-name { font-size: 16px; }
+  /* Home has five things in its top bar; keep them all on screen. */
+  .topbar { gap: 6px; }
+  .topbar .icon-btn { width: 44px; height: 44px; font-size: 20px; }
+  .topbar .lang-pick, .topbar .mode-btn { height: 44px; padding: 0 10px; }
+  .mode-btn { font-size: 20px; }
+  .mode-title { font-size: clamp(20px, 6.6vw, 34px); }
+  .mode-hero .bunny { width: 64px; }
+  /* "Next ▶" in French or Spanish doesn't fit next to the dots: dots on their own row. */
+  .sheet-foot { flex-wrap: wrap; row-gap: 10px; }
+  .sheet-foot .steps { flex-basis: 100%; order: -1; }
+  .sheet-foot .puffy { flex: 1; }
   .levels.n6 .lv-eg { font-size: 21px; }
   .res-actions .puffy { min-width: 140px; }
+}
+@media (orientation: portrait) and (max-width: 350px) {
+  .topbar .icon-btn { width: 40px; height: 40px; font-size: 18px; }
+  .topbar .lang-pick { height: 40px; padding: 0 8px; }
+  .topbar .mode-btn { height: 40px; padding: 0 8px; font-size: 18px; }
+  .lang-pick > [aria-hidden]:first-child { display: none; } /* the globe; the language badge stays */
 }
 
 @media (prefers-reduced-motion: reduce) {

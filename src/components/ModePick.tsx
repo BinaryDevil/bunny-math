@@ -1,18 +1,27 @@
+import { useT, type Lang } from '../i18n';
 import { MODES } from '../lib/generator';
 import { sounds } from '../lib/sound';
 import type { Mode } from '../lib/types';
 import { Bunny } from './Bunny';
+import { LangPicker } from './LangPicker';
 
 /** Shown on the first visit, and from the home screen to switch. */
-export function ModePick({ current, onPick }: { current?: Mode; onPick: (m: Mode) => void }) {
+type Props = { current?: Mode; lang: Lang; onLang: (l: Lang) => void; onPick: (m: Mode) => void };
+
+export function ModePick({ current, lang, onLang, onPick }: Props) {
+  const t = useT();
   return (
     <section class="screen">
+      <header class="topbar">
+        <span class="spacer" />
+        <LangPicker lang={lang} onChange={onLang} />
+      </header>
       <div class="mode-body">
         <div class="mode-hero">
           <Bunny mood="happy" />
-          <h1 class="mode-title">What shall we practice?</h1>
+          <h1 class="mode-title">{t('mode.title')}</h1>
         </div>
-        <div class="modes" role="radiogroup" aria-label="What to practice">
+        <div class="modes" role="radiogroup" aria-label={t('mode.aria')}>
           {(Object.keys(MODES) as Mode[]).map((m) => (
             <button
               key={m}
@@ -29,8 +38,8 @@ export function ModePick({ current, onPick }: { current?: Mode; onPick: (m: Mode
                   <span key={s}>{s}</span>
                 ))}
               </span>
-              <span class="mode-name">{MODES[m].name}</span>
-              <span class="mode-blurb">{MODES[m].blurb}</span>
+              <span class="mode-name">{t(`mode.${m}.name`)}</span>
+              <span class="mode-blurb">{t(`mode.${m}.blurb`)}</span>
             </button>
           ))}
         </div>

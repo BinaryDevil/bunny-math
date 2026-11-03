@@ -1,3 +1,4 @@
+import { list, t, tn } from '../i18n';
 import { compareSign, digit, opSymbol } from './generator';
 import type { ExplainStyle } from './storage';
 import type { Fact, Question } from './types';
@@ -8,7 +9,8 @@ import type { Fact, Question } from './types';
  * - blocks: base-ten blocks (a square is 100, a rod is 10, a cube is 1), and dot arrays for × and ÷
  * - column: the written column method (竖式), one column at a time
  *
- * Captions use *stars* around the words to highlight.
+ * Captions use *stars* around the words to highlight. They are written in the current
+ * language (see src/i18n), so build the steps again after the language changes.
  */
 
 export type Color = 'a' | 'b' | 'new';
@@ -38,7 +40,7 @@ export type Scene =
   | { type: 'column'; width: number; rows: ColRow[]; focus?: number; division?: boolean; result?: number };
 export type Step = { scene: Scene; caption: string };
 
-const PLACE = ['Ones', 'Tens', 'Hundreds'];
+const place = (p: number) => t(p === 0 ? 'place.0' : p === 1 ? 'place.1' : 'place.2');
 const H = (n: number) => digit(n, 2);
 const T = (n: number) => digit(n, 1);
 const O = (n: number) => digit(n, 0);
@@ -49,19 +51,18 @@ const group = (n: number, color: Color): Group => ({
   rods: many(T(n), { color }),
   cubes: many(O(n), { color }),
 });
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+/** "3 tens", "1 hundred", in the current language. */
+const unit = (u: 'one' | 'ten' | 'hundred', n: number) => tn(`unit.${u}`, n);
 const sym = (op: Fact['op']) => opSymbol(op);
 
 /** "3 hundreds, 4 tens and 5 ones" (leaving out the zeros). */
 function placeWords(n: number) {
-  const parts = [
+  const parts: [number, 'hundred' | 'ten' | 'one'][] = [
     [Math.floor(n / 100), 'hundred'],
     [T(n), 'ten'],
     [O(n), 'one'],
-  ]
-    .filter(([k]) => k)
-    .map(([k, w]) => plural(k as number, w as string));
-  return parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0];
+  ];
+  return list(parts.filter(([k]) => k).map(([k, u]) => unit(u, k)));
 }
 
 const marked = (pieces: Piece[], from: number, to: number) => pieces.map((p, i) => (i >= from && i < to ? { ...p, state: 'mark' as const } : p));
@@ -71,7 +72,7 @@ const gone = (pieces: Piece[], n: number) => pieces.map((p, i) => (i >= pieces.l
 
 function addBlocks({ a, b, c }: Fact): Step[] {
   const steps: Step[] = [
-    { scene: { type: 'blocks', parts: [group(a, 'a'), '+', group(b, 'b')] }, caption: `Make *${a}* and *${b}* with blocks.` },
+    { scene: { type: 'blocks', parts: [group(a, 'a'), '+', group(b, 'b')] }, caption: t('ex.make', { a, b }) },
   ];
   let flats = [...many(H(a), { color: 'a' }), ...many(H(b), { color: 'b' })];
   let rods = [...many(T(a), { color: 'a' }), ...many(T(b), { color: 'b' })];
@@ -81,40 +82,40 @@ function addBlocks({ a, b, c }: Fact): Step[] {
 
   steps.push({
     scene: show({ flats, rods, cubes }),
-    caption: a < 10 && b < 10 ? `Put them together: *${onesSum}* ones.` : `Put the ones together: *${O(a)} + ${O(b)} = ${onesSum}*`,
+    caption: a < 10 && b < 10 ? tn('ex.together', onesSum) : t('ex.togetherOnes', { sum: `${O(a)} + ${O(b)} = ${onesSum}` }),
   });
   if (onesSum >= 10) {
-    steps.push({ scene: show({ flats, rods, cubes: marked(cubes, 0, 10) }), caption: `Circle *10 ones*…` });
+    steps.push({ scene: show({ flats, rods, cubes: marked(cubes, 0, 10) }), caption: t('ex.circleOnes') });
     rods = [...rods, { color: 'new' }];
     cubes = cubes.slice(10);
-    steps.push({ scene: show({ flats, rods, cubes }), caption: `…they turn into *1 ten*!` });
+    steps.push({ scene: show({ flats, rods, cubes }), caption: t('ex.makeTen') });
   }
 
   const carried = onesSum >= 10 ? 1 : 0;
   const tensSum = T(a) + T(b) + carried;
   if (T(b) > 0 || tensSum >= 10) {
     const terms = [T(a), ...(T(b) ? [T(b)] : []), ...(carried ? [1] : [])];
-    steps.push({ scene: show({ flats, rods, cubes }), caption: `Now the tens: *${terms.join(' + ')} = ${tensSum}*` });
+    steps.push({ scene: show({ flats, rods, cubes }), caption: t('ex.nowTens', { sum: `${terms.join(' + ')} = ${tensSum}` }) });
   }
   if (tensSum >= 10) {
-    steps.push({ scene: show({ flats, rods: marked(rods, 0, 10), cubes }), caption: `Circle *10 tens*…` });
+    steps.push({ scene: show({ flats, rods: marked(rods, 0, 10), cubes }), caption: t('ex.circleTens') });
     flats = [...flats, { color: 'new' }];
     rods = rods.slice(10);
-    steps.push({ scene: show({ flats, rods, cubes }), caption: `…they turn into *1 hundred*!` });
+    steps.push({ scene: show({ flats, rods, cubes }), caption: t('ex.makeHundred') });
   }
   if (H(b) > 0) {
     const terms = [H(a), H(b), ...(tensSum >= 10 ? [1] : [])];
-    steps.push({ scene: show({ flats, rods, cubes }), caption: `Now the hundreds: *${terms.join(' + ')} = ${H(c)}*` });
+    steps.push({ scene: show({ flats, rods, cubes }), caption: t('ex.nowHundreds', { sum: `${terms.join(' + ')} = ${H(c)}` }) });
   }
   steps.push({
     scene: { type: 'blocks', parts: [group(c, 'a')], result: c },
-    caption: c >= 10 ? `${placeWords(c)} = *${c}*` : `Count them: *${c}*!`,
+    caption: c >= 10 ? t('ex.addEnd', { parts: placeWords(c), c }) : t('ex.count', { c }),
   });
   return steps;
 }
 
 function subBlocks({ a, b, c }: Fact): Step[] {
-  const steps: Step[] = [{ scene: { type: 'blocks', parts: [group(a, 'a')] }, caption: `Start with *${a}*.` }];
+  const steps: Step[] = [{ scene: { type: 'blocks', parts: [group(a, 'a')] }, caption: t('ex.start', { a }) }];
   let flats = many(H(a), { color: 'a' });
   let rods = many(T(a), { color: 'a' });
   let cubes = many(O(a), { color: 'a' });
@@ -122,39 +123,39 @@ function subBlocks({ a, b, c }: Fact): Step[] {
 
   if (O(a) < O(b)) {
     if (rods.length === 0) {
-      push(`Take away ${O(b)} ones? There are only *${O(a)}*, and no tens!`, { flats: marked(flats, flats.length - 1, flats.length), rods, cubes });
+      push(t('ex.onlyOnesNoTens', { ones: unit('one', O(b)), n: O(a) }), { flats: marked(flats, flats.length - 1, flats.length), rods, cubes });
       flats = flats.slice(1);
       rods = many(10, { color: 'new' });
-      push(`Break *1 hundred* into *10 tens*!`);
-      push(`Now take *1 ten*…`, { flats, rods: marked(rods, rods.length - 1, rods.length), cubes });
+      push(t('ex.breakHundred'));
+      push(t('ex.takeTen'), { flats, rods: marked(rods, rods.length - 1, rods.length), cubes });
     } else {
-      push(`Take away ${O(b)} ones? There are only *${O(a)}*!`, { flats, rods: marked(rods, rods.length - 1, rods.length), cubes });
+      push(t('ex.onlyOnes', { ones: unit('one', O(b)), n: O(a) }), { flats, rods: marked(rods, rods.length - 1, rods.length), cubes });
     }
     rods = rods.slice(1);
     cubes = [...cubes, ...many(10, { color: 'new' })];
-    push(`Break *1 ten* into *10 ones*!`);
+    push(t('ex.breakTen'));
   }
   if (O(b) > 0) {
     cubes = gone(cubes, O(b));
-    push(`Take away *${plural(O(b), 'one')}*.`);
+    push(t('ex.takeAway', { what: unit('one', O(b)) }));
   }
   if (rods.length < T(b)) {
-    push(`Take away ${T(b)} tens? There are only *${rods.length}*!`, { flats: marked(flats, flats.length - 1, flats.length), rods, cubes });
+    push(t('ex.onlyTens', { tens: unit('ten', T(b)), n: rods.length }), { flats: marked(flats, flats.length - 1, flats.length), rods, cubes });
     flats = flats.slice(1);
     rods = [...rods, ...many(10, { color: 'new' })];
-    push(`Break *1 hundred* into *10 tens*!`);
+    push(t('ex.breakHundred'));
   }
   if (T(b) > 0) {
     rods = gone(rods, T(b));
-    push(`Take away *${plural(T(b), 'ten')}*.`);
+    push(t('ex.takeAway', { what: unit('ten', T(b)) }));
   }
   if (H(b) > 0) {
     flats = gone(flats, H(b));
-    push(`Take away *${plural(H(b), 'hundred')}*.`);
+    push(t('ex.takeAway', { what: unit('hundred', H(b)) }));
   }
   steps.push({
     scene: { type: 'blocks', parts: [group(c, 'a')], result: c },
-    caption: c >= 10 ? `${placeWords(c)} left. That's *${c}*!` : `*${c}* left!`,
+    caption: c >= 10 ? t('ex.subEnd', { parts: placeWords(c), c }) : t('ex.left', { c }),
   });
   return steps;
 }
@@ -169,8 +170,8 @@ function countBy(step: number, times: number) {
 function timesBlocks({ a, b, c }: Fact): Step[] {
   if (a <= 10 && b <= 10) {
     return [
-      { scene: { type: 'array', rows: a, cols: b }, caption: `*${a} × ${b}* means *${a} rows* of *${b}*.` },
-      { scene: { type: 'array', rows: a, cols: b, totals: true }, caption: `Count by ${b}s: ${countBy(b, a)}` },
+      { scene: { type: 'array', rows: a, cols: b }, caption: t('ex.rowsOf', { a, b }) },
+      { scene: { type: 'array', rows: a, cols: b, totals: true }, caption: t('ex.countBy', { b, list: countBy(b, a) }) },
       { scene: { type: 'array', rows: a, cols: b, totals: true, result: c }, caption: `${a} × ${b} = *${c}*` },
     ];
   }
@@ -180,21 +181,23 @@ function timesBlocks({ a, b, c }: Fact): Step[] {
   const steps: Step[] = [
     {
       scene: { type: 'blocks', parts: Array.from({ length: n }, () => group(big, 'a')) },
-      caption: `${a} × ${b} means *${n} groups* of *${big}*.`,
+      caption: t('ex.groupsOf', { a, b, n, big }),
     },
   ];
   if (O(big) === 0) {
-    steps.push({ scene: { type: 'text', lines: [`${n} × ${T(big)} tens = ${n * T(big)} tens`] }, caption: `${n} lots of *${T(big)} tens* is *${n * T(big)} tens*.` });
+    const tens = unit('ten', T(big));
+    const total = unit('ten', n * T(big));
+    steps.push({ scene: { type: 'text', lines: [`${n} × ${tens} = ${total}`] }, caption: t('ex.lotsOfTens', { n, t: tens, x: total }) });
   } else {
     steps.push(
-      { scene: { type: 'text', lines: [`${big} = ${tensPart} + ${O(big)}`] }, caption: `Split *${big}* into tens and ones.` },
-      { scene: { type: 'text', lines: [`${n} × ${tensPart} = ${n * tensPart}`] }, caption: `${n} lots of ${tensPart}: *${n * tensPart}*` },
-      { scene: { type: 'text', lines: [`${n} × ${O(big)} = ${n * O(big)}`] }, caption: `${n} lots of ${O(big)}: *${n * O(big)}*` },
+      { scene: { type: 'text', lines: [`${big} = ${tensPart} + ${O(big)}`] }, caption: t('ex.split', { big }) },
+      { scene: { type: 'text', lines: [`${n} × ${tensPart} = ${n * tensPart}`] }, caption: t('ex.lotsOf', { n, m: tensPart, x: n * tensPart }) },
+      { scene: { type: 'text', lines: [`${n} × ${O(big)} = ${n * O(big)}`] }, caption: t('ex.lotsOf', { n, m: O(big), x: n * O(big) }) },
     );
   }
   steps.push({
     scene: { type: 'blocks', parts: [group(c, 'a')], result: c },
-    caption: O(big) === 0 ? `That's *${c}*!` : `${n * tensPart} + ${n * O(big)} = *${c}*`,
+    caption: O(big) === 0 ? t('ex.thats', { c }) : `${n * tensPart} + ${n * O(big)} = *${c}*`,
   });
   return steps;
 }
@@ -202,22 +205,22 @@ function timesBlocks({ a, b, c }: Fact): Step[] {
 function divideBlocks({ a, b, c }: Fact): Step[] {
   if (c <= 10) {
     return [
-      { scene: { type: 'blocks', parts: [group(a, 'a')] }, caption: `*${a} ÷ ${b}*: how many *${b}s* make ${a}?` },
-      { scene: { type: 'array', rows: c, cols: b, totals: true }, caption: `Make rows of ${b}: ${countBy(b, c)}` },
-      { scene: { type: 'array', rows: c, cols: b, totals: true, result: c }, caption: `That's *${c} rows*. ${a} ÷ ${b} = *${c}*` },
+      { scene: { type: 'blocks', parts: [group(a, 'a')] }, caption: t('ex.howManyIn', { a, b }) },
+      { scene: { type: 'array', rows: c, cols: b, totals: true }, caption: t('ex.rowsOfB', { b, list: countBy(b, c) }) },
+      { scene: { type: 'array', rows: c, cols: b, totals: true, result: c }, caption: t('ex.thatsRows', { a, b, c }) },
     ];
   }
   const easy = Math.floor(a / (10 * b)) * 10 * b;
   const rest = a - easy;
   const steps: Step[] = [
-    { scene: { type: 'blocks', parts: [group(a, 'a')] }, caption: `Share *${a}* into *${b}* equal groups.` },
-    { scene: { type: 'text', lines: [rest ? `${a} = ${easy} + ${rest}` : `${a} = ${easy}`] }, caption: rest ? `Split ${a} into parts that are easy to share.` : `${a} is easy to share!` },
-    { scene: { type: 'text', lines: [`${easy} ÷ ${b} = ${easy / b}`] }, caption: `Each group gets *${easy / b}*…` },
+    { scene: { type: 'blocks', parts: [group(a, 'a')] }, caption: t('ex.share', { a, b }) },
+    { scene: { type: 'text', lines: [rest ? `${a} = ${easy} + ${rest}` : `${a} = ${easy}`] }, caption: rest ? t('ex.splitEasy', { a }) : t('ex.easy', { a }) },
+    { scene: { type: 'text', lines: [`${easy} ÷ ${b} = ${easy / b}`] }, caption: t('ex.eachGets', { n: easy / b }) },
   ];
-  if (rest) steps.push({ scene: { type: 'text', lines: [`${rest} ÷ ${b} = ${rest / b}`] }, caption: `…and *${rest / b}* more.` });
+  if (rest) steps.push({ scene: { type: 'text', lines: [`${rest} ÷ ${b} = ${rest / b}`] }, caption: t('ex.andMore', { n: rest / b }) });
   steps.push({
     scene: { type: 'blocks', parts: Array.from({ length: b }, () => group(c, 'a')), result: c },
-    caption: rest ? `${easy / b} + ${rest / b} = *${c}* in each group.` : `*${c}* in each group.`,
+    caption: rest ? t('ex.inEachSum', { x: easy / b, y: rest / b, c }) : t('ex.inEach', { c }),
   });
   return steps;
 }
@@ -232,7 +235,7 @@ function digitsAt(n: number, width: number, tone: Cell['tone'], end = width - 1)
   return row;
 }
 
-const STACK = 'Stack them up: *ones under ones*.';
+const stack = () => t('ex.stack');
 
 function addColumn({ a, b, c }: Fact): Step[] {
   const width = len(c);
@@ -250,22 +253,22 @@ function addColumn({ a, b, c }: Fact): Step[] {
       { cells: [...ans], rule: true },
     ],
   });
-  const steps: Step[] = [{ scene: scene(), caption: STACK }];
+  const steps: Step[] = [{ scene: scene(), caption: stack() }];
   const top = Math.max(len(a), len(b));
   let k = 0;
   for (let p = 0; p < top; p++) {
     const col = width - 1 - p;
     const terms = [...(p < len(a) ? [digit(a, p)] : []), ...(p < len(b) ? [digit(b, p)] : []), ...(k ? [k] : [])];
     const sum = terms.reduce((x, y) => x + y, 0);
-    const sumText = `${PLACE[p]}: *${terms.join(' + ')} = ${sum}*.`;
+    const said = { place: place(p), sum: `${terms.join(' + ')} = ${sum}` };
     if (sum >= 10 && p < top - 1) {
       ans[col] = { t: String(sum % 10), tone: 'new' };
       carry[col - 1] = { t: '1', tone: 'carry' };
-      steps.push({ scene: scene(col), caption: `${sumText} Write ${sum % 10}, carry 1.` });
+      steps.push({ scene: scene(col), caption: t('ex.colWriteCarry', { ...said, d: sum % 10, k: 1 }) });
       k = 1;
     } else {
       digitsAt(sum, width, 'new', col).forEach((cell, i) => cell && (ans[i] = cell));
-      steps.push({ scene: scene(col), caption: `${sumText} Write ${sum}.` });
+      steps.push({ scene: scene(col), caption: t('ex.colWrite', { ...said, d: sum }) });
       k = 0;
     }
   }
@@ -288,7 +291,7 @@ function subColumn({ a, b, c }: Fact): Step[] {
       { cells: [...ans], rule: true },
     ],
   });
-  const steps: Step[] = [{ scene: scene(), caption: STACK }];
+  const steps: Step[] = [{ scene: scene(), caption: stack() }];
   let borrowed = 0;
   for (let p = 0; p < width; p++) {
     const col = width - 1 - p;
@@ -302,13 +305,14 @@ function subColumn({ a, b, c }: Fact): Step[] {
     const leadingZero = p > 0 && Math.floor(c / 10 ** p) === 0;
     if (!leadingZero) ans[col] = { t: String(r), tone: 'new' };
     const sum = `*${top}${borrowed ? ' − 1' : ''}${hasB ? ` − ${db}` : ''} = ${r}*`;
+    const pl = place(p);
     let caption: string;
-    if (short && borrowed) caption = `${PLACE[p]}: too small again! Borrow 1: ${sum}`;
-    else if (short) caption = `${PLACE[p]}: ${da} − ${db}? Too small! Borrow 1 from next door: ${sum}`;
-    else if (borrowed) caption = `${PLACE[p]}: the dot means 1 less. ${sum}`;
-    else if (!hasB) caption = `${PLACE[p]}: nothing to take away. Write *${da}*.`;
-    else caption = `${PLACE[p]}: ${sum}.`;
-    if (leadingZero) caption += ' No 0 at the front.';
+    if (short && borrowed) caption = t('ex.borrowAgain', { place: pl, sum });
+    else if (short) caption = t('ex.borrow', { place: pl, a: da, b: db, sum });
+    else if (borrowed) caption = t('ex.dotLess', { place: pl, sum });
+    else if (!hasB) caption = t('ex.nothingToTake', { place: pl, d: da });
+    else caption = t('ex.plain', { place: pl, sum });
+    if (leadingZero) caption = t('ex.noZero', { text: caption });
     steps.push({ scene: scene(col), caption });
     borrowed = short ? 1 : 0;
   }
@@ -336,21 +340,21 @@ function timesColumn({ a, b, c }: Fact): Step[] {
       { cells: [...ans], rule: true },
     ],
   });
-  const steps: Step[] = [{ scene: scene(), caption: swap ? `Put *${top}* on top and *${m}* under it.` : STACK }];
+  const steps: Step[] = [{ scene: scene(), caption: swap ? t('ex.putOnTop', { top, m }) : stack() }];
   let k = 0;
   for (let p = 0; p < len(top); p++) {
     const col = width - 1 - p;
     const d = digit(top, p);
     const prod = d * m + k;
-    const sumText = `${PLACE[p]}: *${d} × ${m}${k ? ` + ${k}` : ''} = ${prod}*.`;
+    const said = { place: place(p), sum: `${d} × ${m}${k ? ` + ${k}` : ''} = ${prod}` };
     if (prod >= 10 && p < len(top) - 1) {
       ans[col] = { t: String(prod % 10), tone: 'new' };
       k = Math.floor(prod / 10);
       carry[col - 1] = { t: String(k), tone: 'carry' };
-      steps.push({ scene: scene(col), caption: `${sumText} Write ${prod % 10}, carry ${k}.` });
+      steps.push({ scene: scene(col), caption: t('ex.colWriteCarry', { ...said, d: prod % 10, k }) });
     } else {
       digitsAt(prod, width, 'new', col).forEach((cell, i) => cell && (ans[i] = cell));
-      steps.push({ scene: scene(col), caption: `${sumText} Write ${prod}.` });
+      steps.push({ scene: scene(col), caption: t('ex.colWrite', { ...said, d: prod }) });
       k = 0;
     }
   }
@@ -372,13 +376,13 @@ function divideColumn({ a, b, c }: Fact): Step[] {
     division: true,
     rows: [{ cells: [...quotient] }, { label: String(b), cells: digitsAt(a, width, 'a'), bracket: true }, ...work.map((r) => ({ ...r, cells: [...r.cells] }))],
   });
-  const steps: Step[] = [{ scene: scene(), caption: `How many *${b}s* in *${a}*? Start on the left.` }];
+  const steps: Step[] = [{ scene: scene(), caption: t('ex.divStart', { a, b }) }];
   let cur = 0;
   let started = false;
   for (let i = 0; i < width; i++) {
     cur = cur * 10 + ds[i];
     if (!started && cur < b && i < width - 1) {
-      steps.push({ scene: scene(i), caption: `${cur} is less than ${b}, so look at *${cur * 10 + ds[i + 1]}*.` });
+      steps.push({ scene: scene(i), caption: t('ex.lessThan', { cur, b, next: cur * 10 + ds[i + 1] }) });
       continue;
     }
     started = true;
@@ -387,19 +391,19 @@ function divideColumn({ a, b, c }: Fact): Step[] {
     const rem = cur - prod;
     quotient[i] = { t: String(q), tone: 'new' };
     work.push({ cells: digitsAt(prod, width, 'b', i) });
-    steps.push({ scene: scene(i), caption: `${cur} ÷ ${b}: *${b} × ${q} = ${prod}*. Write ${q} on top.` });
+    steps.push({ scene: scene(i), caption: t('ex.divStep', { cur, b, q, prod }) });
     if (i < width - 1) {
       const row = rem ? digitsAt(rem, width, 'a', i) : Array<Cell | null>(width).fill(null);
       row[i + 1] = { t: String(ds[i + 1]), tone: 'new' };
       work.push({ cells: row, rule: true });
       steps.push({
         scene: scene(i + 1),
-        caption: `${cur} − ${prod} = ${rem}. Bring down the ${ds[i + 1]}: *${rem * 10 + ds[i + 1]}*.`,
+        caption: t('ex.bringDown', { cur, prod, rem, d: ds[i + 1], next: rem * 10 + ds[i + 1] }),
       });
       cur = rem;
     } else {
       work.push({ cells: digitsAt(rem, width, 'a', i), rule: true });
-      steps.push({ scene: scene(i), caption: `${cur} − ${prod} = *0*. Nothing left over!` });
+      steps.push({ scene: scene(i), caption: t('ex.noneLeft', { cur, prod }) });
     }
   }
   steps.push({ scene: scene(undefined, c), caption: `*${a} ÷ ${b} = ${c}*` });
@@ -448,19 +452,19 @@ export function explain(q: Question, style: ExplainStyle = 'blocks'): Step[] {
     return [
       {
         scene: { type: 'text', lines: [questionText(q), `${f.a} ${sym(f.op)} ${f.b} = ?`] },
-        caption: `Missing number? *Turn it around!*`,
+        caption: t('ex.turnAround'),
       },
       ...steps.slice(0, -1),
-      { ...last, caption: `The missing number is *${f.c}*!` },
+      { ...last, caption: t('ex.missingIs', { n: f.c }) },
     ];
   }
   const steps = factSteps(q.fact, style);
   if (q.kind === 'compare') {
     const sign = compareSign(q.fact.c, q.than);
-    const words = { '<': 'smaller than', '>': 'bigger than', '=': 'the same as' }[sign];
+    const key = ({ '<': 'ex.smaller', '>': 'ex.bigger', '=': 'ex.same' } as const)[sign];
     steps.push({
       scene: { type: 'text', lines: [`${q.fact.c} ${sign} ${q.than}`] },
-      caption: `*${q.fact.c}* is ${words} *${q.than}*.`,
+      caption: t(key, { x: q.fact.c, y: q.than }),
     });
   }
   return steps;

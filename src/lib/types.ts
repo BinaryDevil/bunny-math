@@ -12,7 +12,14 @@ export type Skill = 'add20' | 'sub20' | 'add' | 'sub' | 'carry' | 'borrow' | 'ti
 /** The underlying sum, e.g. 38 + 7 = 45. */
 export type Fact = { a: number; op: Op; b: number; c: number };
 
-export type Story = { emoji: string; text: string; ask: string };
+/** Which picture story a question tells. The words live in the translations: `story.<id>.text` and `story.<id>.ask`. */
+export type StoryId =
+  | 'fish' | 'flowers' | 'cookies' | 'stickers' | 'ladybugs'
+  | 'strawberries' | 'balloons' | 'birds' | 'cupcakes' | 'butterflies'
+  | 'plates' | 'pots' | 'bunnies' | 'bags'
+  | 'share' | 'boxes' | 'tanks' | 'bunches';
+
+export type Story = { emoji: string; id: StoryId };
 
 export type Question = {
   id: string;

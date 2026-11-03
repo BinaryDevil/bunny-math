@@ -1,3 +1,4 @@
+import { isLang, type Lang } from '../i18n';
 import type { LevelId, Mode } from './types';
 
 /** How "Show me how" explains a sum: base-ten blocks, or the column method (竖式). */
@@ -10,6 +11,8 @@ export type Saved = {
   /** The level picked in each mode. */
   levelFor: Record<Mode, LevelId>;
   explain: ExplainStyle;
+  /** The language the child picked. Unset means: follow the browser's language. */
+  lang?: Lang;
   length: number;
   sound: boolean;
   stickers: string[];
@@ -28,6 +31,8 @@ export function load(): Saved {
     const saved: Saved = { ...DEFAULTS, ...rest };
     // Saves from before modes existed kept a single add/take-away level.
     if (typeof level === 'number' && !rest.levelFor) saved.levelFor = { ...DEFAULTS.levelFor, plus: level as LevelId };
+    // A language that is no longer offered falls back to the browser's language.
+    if (!isLang(saved.lang)) delete saved.lang;
     return saved;
   } catch {
     return { ...DEFAULTS };

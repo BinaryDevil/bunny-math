@@ -1,5 +1,6 @@
 import { createContext, Fragment } from 'preact';
 import { useContext, useEffect, useMemo, useState } from 'preact/hooks';
+import { useLang, useT, type MessageKey } from '../i18n';
 import { explain, questionText, type Group, type Piece, type Scene } from '../lib/explain';
 import { sounds } from '../lib/sound';
 import type { ExplainStyle } from '../lib/storage';
@@ -11,9 +12,9 @@ export const ExplainPref = createContext<{ style: ExplainStyle; setStyle: (s: Ex
   setStyle: () => {},
 });
 
-const STYLES: { id: ExplainStyle; label: string }[] = [
-  { id: 'blocks', label: '🧱 Blocks' },
-  { id: 'column', label: '✏️ Columns' },
+const STYLES: { id: ExplainStyle; label: MessageKey }[] = [
+  { id: 'blocks', label: 'sheet.blocks' },
+  { id: 'column', label: 'sheet.columns' },
 ];
 
 /** Turns "*45* is bigger" into highlighted words. */
@@ -141,7 +142,10 @@ function Stage({ scene }: { scene: Scene }) {
 
 export function ExplainSheet({ question, onClose }: { question: Question; onClose: () => void }) {
   const { style, setStyle } = useContext(ExplainPref);
-  const steps = useMemo(() => explain(question, style), [question, style]);
+  const t = useT();
+  const lang = useLang();
+  // The captions are written in the current language, so build them again when it changes.
+  const steps = useMemo(() => explain(question, style), [question, style, lang]);
   const [cur, setCur] = useState(0);
   useEffect(() => setCur(0), [style]);
   const last = cur === steps.length - 1;
@@ -165,10 +169,10 @@ export function ExplainSheet({ question, onClose }: { question: Question; onClos
 
   return (
     <div class="scrim" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div class="sheet" role="dialog" aria-modal="true" aria-label={`How to solve ${questionText(question)}`}>
+      <div class="sheet" role="dialog" aria-modal="true" aria-label={t('sheet.aria', { q: questionText(question) })}>
         <div class="sheet-head">
           <p class="sheet-title">{questionText(question).replace(/-/g, '−')}</p>
-          <div class="seg style-pick" role="radiogroup" aria-label="Show it with">
+          <div class="seg style-pick" role="radiogroup" aria-label={t('sheet.showWith')}>
             {STYLES.map((s) => (
               <button
                 key={s.id}
@@ -179,11 +183,11 @@ export function ExplainSheet({ question, onClose }: { question: Question; onClos
                   setStyle(s.id);
                 }}
               >
-                {s.label}
+                {t(s.label)}
               </button>
             ))}
           </div>
-          <button class="puffy icon-btn" aria-label="Close" onClick={onClose}>
+          <button class="puffy icon-btn" aria-label={t('sheet.close')} onClick={onClose}>
             ✕
           </button>
         </div>
@@ -192,16 +196,16 @@ export function ExplainSheet({ question, onClose }: { question: Question; onClos
           <Highlight text={steps[Math.min(cur, steps.length - 1)].caption} />
         </p>
         <div class="sheet-foot">
-          <div class="steps" aria-label={`Step ${cur + 1} of ${steps.length}`}>
+          <div class="steps" aria-label={t('sheet.step', { n: cur + 1, total: steps.length })}>
             {steps.map((_, i) => (
               <span key={i} class={i === cur ? 'on' : ''} />
             ))}
           </div>
           <button class="puffy" style={{ visibility: cur ? 'visible' : 'hidden' }} onClick={() => go(-1)}>
-            ◀ Back
+            {t('sheet.back')}
           </button>
           <button class="puffy berry" onClick={() => go(1)}>
-            {last ? 'Got it!' : 'Next ▶'}
+            {t(last ? 'sheet.gotIt' : 'sheet.next')}
           </button>
         </div>
       </div>

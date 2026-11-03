@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { t, useT, type MessageKey } from '../i18n';
 import { smallBurst } from '../lib/celebrate';
 import { compareSign, correctAnswer, opSymbol } from '../lib/generator';
 import { sounds } from '../lib/sound';
@@ -11,8 +12,14 @@ export type QuizResult = { questions: Question[]; firstTry: Record<string, boole
 type Status = 'ask' | 'right' | 'wrong1' | 'wrong2';
 type Item = { q: Question; review: boolean };
 
-const ENCOURAGE = ['You can do it!', 'Take your time!', "Let's hop to it!", 'Think hard!', 'I believe in you!'];
-const CHEERS = ['Yes!', 'Great job!', 'You got it!', 'Super!', 'Hoppy-tastic!'];
+const ENCOURAGE: MessageKey[] = ['quiz.encourage.0', 'quiz.encourage.1', 'quiz.encourage.2', 'quiz.encourage.3', 'quiz.encourage.4'];
+const CHEERS: MessageKey[] = ['quiz.cheer.0', 'quiz.cheer.1', 'quiz.cheer.2', 'quiz.cheer.3', 'quiz.cheer.4'];
+const OP_LABEL = { '+': 'quiz.add', '-': 'quiz.sub', '×': 'quiz.times', '÷': 'quiz.divide' } as const;
+const SIGN_WORDS = {
+  '<': { aria: 'quiz.smallerThan', short: 'quiz.smaller' },
+  '=': { aria: 'quiz.sameAs', short: 'quiz.same' },
+  '>': { aria: 'quiz.biggerThan', short: 'quiz.bigger' },
+} as const;
 const SIGNS: CompareSign[] = ['<', '=', '>'];
 
 export function fullFact(q: Question) {
@@ -29,13 +36,13 @@ function shownAnswer(q: Question) {
 function label(q: Question) {
   switch (q.kind) {
     case 'missing':
-      return 'Find the missing number!';
+      return t('quiz.missing');
     case 'choice':
-      return 'Pick the answer!';
+      return t('quiz.choice');
     case 'compare':
-      return 'Bigger, smaller, or the same?';
+      return t('quiz.compare');
     default:
-      return { '+': 'Add them up!', '-': 'Take away!', '×': 'Times!', '÷': 'Share it out!' }[q.fact.op];
+      return t(OP_LABEL[q.fact.op]);
   }
 }
 
@@ -51,10 +58,10 @@ function Prompt({ q, value, status }: { q: Question; value: string; status: Stat
       <>
         <div class="story">
           <span class="story-pic" aria-hidden="true">{q.story.emoji}</span>
-          <p class="story-text">{q.story.text}</p>
+          <p class="story-text">{t(`story.${q.story.id}.text`, { a, b })}</p>
         </div>
         <div class="story-ask">
-          {q.story.ask} {slot}
+          {t(`story.${q.story.id}.ask`)} {slot}
         </div>
       </>
     );
@@ -93,6 +100,7 @@ function Prompt({ q, value, status }: { q: Question; value: string; status: Stat
 }
 
 export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onDone: (r: QuizResult) => void; onQuit: () => void }) {
+  useT();
   const [items, setItems] = useState<Item[]>(() => questions.map((q) => ({ q, review: false })));
   const [idx, setIdx] = useState(0);
   const [input, setInput] = useState('');
@@ -201,28 +209,28 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
   }, []);
 
   const mood: Mood = status === 'right' ? 'happy' : status === 'ask' ? 'normal' : 'think';
-  const bubble = status === 'right' ? CHEERS[idx % CHEERS.length] : status === 'ask' ? ENCOURAGE[idx % ENCOURAGE.length] : 'Hmm…';
+  const bubble = t(status === 'right' ? CHEERS[idx % CHEERS.length] : status === 'ask' ? ENCOURAGE[idx % ENCOURAGE.length] : 'quiz.hmm');
   const mainCount = questions.length;
   const done = Math.min(idx, mainCount);
 
   return (
     <section class="screen">
       <header class="topbar">
-        <button class="puffy icon-btn" aria-label="Stop quiz" onClick={() => setQuitting(true)}>
+        <button class="puffy icon-btn" aria-label={t('quiz.stop')} onClick={() => setQuitting(true)}>
           ✕
         </button>
-        <ol class="dots" aria-label={`Question ${Math.min(idx + 1, mainCount)} of ${mainCount}`}>
+        <ol class="dots" aria-label={t('quiz.progress', { n: Math.min(idx + 1, mainCount), total: mainCount })}>
           {items.map((it, i) => (
             <li key={it.q.id} class={`${it.review ? 'review' : ''} ${outcomes[i] ?? ''} ${i === idx ? 'now' : ''}`} />
           ))}
         </ol>
-        <span class="count">{review ? 'Again!' : `${done + 1} / ${mainCount}`}</span>
+        <span class="count">{review ? t('quiz.again') : `${done + 1} / ${mainCount}`}</span>
       </header>
 
       <div class="quiz-body">
         <div class="q-pane">
           <div class="q-card" ref={cardRef}>
-            {review ? <span class="review-tag">One more try!</span> : <span class="tape" />}
+            {review ? <span class="review-tag">{t('quiz.oneMore')}</span> : <span class="tape" />}
             <Bunny mood={mood} class={`peek ${status === 'right' ? 'bounce' : ''}`} key={`${idx}-${status}`}>
               <span class="bubble">{bubble}</span>
             </Bunny>
@@ -231,7 +239,7 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
             {status === 'ask' && (
               <div class="hint-row">
                 <button class="puffy butter hint-btn" onClick={openHelp}>
-                  💡 Show me how
+                  {t('quiz.showMe')}
                 </button>
               </div>
             )}
@@ -247,18 +255,18 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
                     {k}
                   </button>
                 ))}
-                <button class="puffy key side" aria-label="Delete" onClick={() => press('back')}>
+                <button class="puffy key side" aria-label={t('quiz.delete')} onClick={() => press('back')}>
                   ⌫
                 </button>
                 <button class="puffy key" onClick={() => press('0')}>
                   0
                 </button>
                 <button class="puffy key side" onClick={() => press('clear')}>
-                  Clear
+                  {t('quiz.clear')}
                 </button>
               </div>
               <button class="puffy berry check" disabled={!input || status !== 'ask'} onClick={() => submit(Number(input))}>
-                Check
+                {t('quiz.check')}
               </button>
             </>
           )}
@@ -281,9 +289,9 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
                 const wrong = wrongPicks.includes(s);
                 const right = status === 'right' && s === answer;
                 return (
-                  <button key={s} class={`puffy choice ${wrong ? 'picked-wrong' : ''} ${right ? 'picked-right' : ''}`} disabled={wrong || status !== 'ask'} onClick={() => submit(s)} aria-label={{ '<': 'smaller than', '=': 'the same as', '>': 'bigger than' }[s]}>
+                  <button key={s} class={`puffy choice ${wrong ? 'picked-wrong' : ''} ${right ? 'picked-right' : ''}`} disabled={wrong || status !== 'ask'} onClick={() => submit(s)} aria-label={t(SIGN_WORDS[s].aria)}>
                     {s}
-                    <small>{{ '<': 'smaller', '=': 'same', '>': 'bigger' }[s]}</small>
+                    <small>{t(SIGN_WORDS[s].short)}</small>
                   </button>
                 );
               })}
@@ -296,12 +304,12 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
         <div class="feedback good" role="status">
           <Bunny mood="happy" class="fb-face" />
           <div class="fb-text">
-            <p class="fb-title">{CHEERS[idx % CHEERS.length]} ⭐</p>
+            <p class="fb-title">{t(CHEERS[idx % CHEERS.length])} ⭐</p>
             <p class="fb-sub">{fullFact(q)}</p>
           </div>
           <div class="fb-actions">
             <button class="puffy mint" onClick={next} autoFocus>
-              {isLast ? 'See my stars!' : 'Next'}
+              {t(isLast ? 'quiz.seeStars' : 'quiz.next')}
             </button>
           </div>
         </div>
@@ -310,15 +318,15 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
         <div class="feedback bad" role="status">
           <Bunny mood="think" class="fb-face" />
           <div class="fb-text">
-            <p class="fb-title">So close!</p>
-            <p class="fb-sub">Have one more go.</p>
+            <p class="fb-title">{t('quiz.soClose')}</p>
+            <p class="fb-sub">{t('quiz.oneMoreGo')}</p>
           </div>
           <div class="fb-actions">
             <button class="puffy butter" onClick={openHelp}>
-              💡 Show me how
+              {t('quiz.showMe')}
             </button>
             <button class="puffy berry" onClick={tryAgain} autoFocus>
-              Try again
+              {t('quiz.tryAgain')}
             </button>
           </div>
         </div>
@@ -327,15 +335,15 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
         <div class="feedback bad" role="status">
           <Bunny mood="think" class="fb-face" />
           <div class="fb-text">
-            <p class="fb-title">The answer is {shownAnswer(q)}</p>
-            <p class="fb-sub">{review ? "Let's look at how it works." : "We'll try it again at the end."}</p>
+            <p class="fb-title">{t('quiz.answerIs', { answer: shownAnswer(q) })}</p>
+            <p class="fb-sub">{t(review ? 'quiz.lookHow' : 'quiz.tryLater')}</p>
           </div>
           <div class="fb-actions">
             <button class="puffy butter" onClick={openHelp}>
-              💡 Show me how
+              {t('quiz.showMe')}
             </button>
             <button class="puffy berry" onClick={next} autoFocus>
-              {isLast ? 'See my stars!' : 'Next'}
+              {t(isLast ? 'quiz.seeStars' : 'quiz.next')}
             </button>
           </div>
         </div>
@@ -345,16 +353,16 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
 
       {quitting && (
         <div class="scrim">
-          <div class="dialog" role="alertdialog" aria-modal="true" aria-label="Stop the quiz?">
+          <div class="dialog" role="alertdialog" aria-modal="true" aria-label={t('quiz.stopTitle')}>
             <Bunny mood="think" />
-            <h2>Stop the quiz?</h2>
-            <p>Your answers so far won't be saved.</p>
+            <h2>{t('quiz.stopTitle')}</h2>
+            <p>{t('quiz.stopBody')}</p>
             <div class="dialog-actions">
               <button class="puffy" onClick={onQuit}>
-                Stop
+                {t('quiz.stopYes')}
               </button>
               <button class="puffy berry" onClick={() => setQuitting(false)} autoFocus>
-                Keep going
+                {t('quiz.keepGoing')}
               </button>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'preact/hooks';
+import { t, useT } from '../i18n';
 import { compareSign, correctAnswer, generateQuiz, levelOf, opSymbol } from '../lib/generator';
 import { randomSeed } from '../lib/rng';
 import type { LevelId, Question } from '../lib/types';
@@ -33,9 +34,9 @@ function PrintedQuestion({ q }: { q: Question }) {
       return (
         <span>
           <span class="story">
-            {q.story.emoji} {q.story.text}
+            {q.story.emoji} {t(`story.${q.story.id}.text`, { a, b })}
           </span>
-          {q.story.ask} <Box />
+          {t(`story.${q.story.id}.ask`)} <Box />
         </span>
       );
     default:
@@ -61,6 +62,7 @@ const keyAnswer = (q: Question) => (q.kind === 'compare' ? compareSign(q.fact.c,
  * come after the last sheet, starting on a new page.
  */
 export function Worksheet({ level, count, onBack }: { level: LevelId; count: number; onBack: () => void }) {
+  useT();
   const [seed, setSeed] = useState(randomSeed);
   const [pageCount, setPageCount] = useState(1);
   const pages = useMemo(() => {
@@ -74,10 +76,10 @@ export function Worksheet({ level, count, onBack }: { level: LevelId; count: num
     <section class="screen print-screen">
       <div class="print-bar no-print">
         <button class="puffy" onClick={onBack}>
-          ◀ Back
+          {t('ws.back')}
         </button>
         <div class="length">
-          <span id="pages-label">Pages</span>
+          <span id="pages-label">{t('ws.pages')}</span>
           <div class="seg" role="radiogroup" aria-labelledby="pages-label">
             {PAGE_CHOICES.map((n) => (
               <button key={n} role="radio" aria-checked={pageCount === n} onClick={() => setPageCount(n)}>
@@ -87,10 +89,10 @@ export function Worksheet({ level, count, onBack }: { level: LevelId; count: num
           </div>
         </div>
         <button class="puffy" onClick={() => setSeed(randomSeed())}>
-          🔄 New questions
+          {t('ws.new')}
         </button>
         <button class="puffy berry" onClick={() => print()}>
-          🖨️ Print
+          {t('ws.print')}
         </button>
       </div>
 
@@ -98,15 +100,15 @@ export function Worksheet({ level, count, onBack }: { level: LevelId; count: num
         <article key={p} class="sheet-paper ws-page">
           <header class="ws-head">
             <div>
-              <h1 class="ws-title">Bunny Math 🐰</h1>
+              <h1 class="ws-title">{t('app.name')} 🐰</h1>
               <p class="ws-sub">
-                {lv.name} · {lv.blurb}
-                {pageCount > 1 && ` · Page ${p + 1} of ${pageCount}`}
+                {t(`level.${lv.id}.name`)} · {t(`level.${lv.id}.blurb`)}
+                {pageCount > 1 && ` · ${t('ws.pageOf', { p: p + 1, n: pageCount })}`}
               </p>
             </div>
             <div class="ws-lines">
-              <span>Name: ____________________</span>
-              <span>Date: ____________</span>
+              <span>{t('ws.name')} ____________________</span>
+              <span>{t('ws.date')} ____________</span>
             </div>
           </header>
           <div class="ws-grid">
@@ -121,10 +123,10 @@ export function Worksheet({ level, count, onBack }: { level: LevelId; count: num
       ))}
 
       <article class="sheet-paper ws-answers">
-        <h2 class="ws-title">Answers</h2>
+        <h2 class="ws-title">{t('ws.answers')}</h2>
         {pages.map((questions, p) => (
           <section key={p} class="ws-key">
-            {pageCount > 1 && <h3>Page {p + 1}</h3>}
+            {pageCount > 1 && <h3>{t('ws.page', { p: p + 1 })}</h3>}
             <ol>
               {questions.map((q) => (
                 <li key={q.id}>{keyAnswer(q)}</li>
