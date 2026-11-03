@@ -87,7 +87,8 @@ describe('ranks on a big board', () => {
         expect(board.near.map((e) => e.total), id).toEqual(order.slice(Math.max(0, pos - 1), pos + 2).map((x) => x.total));
       }
     }
-  });
+    // About 430 lookups on a 3,000-player board: slow by design, and slower on CI machines.
+  }, 30_000);
 
   it('reads only a few hundred rows per leaderboard view, wherever you are on it', async () => {
     const c = counting(env.DB);
