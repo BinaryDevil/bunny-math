@@ -5,7 +5,7 @@ compatibility_date = "2026-10-15"
 
 [vars]
 # Sites allowed to call this server from a browser, comma-separated. Add yours if the site moves.
-ALLOWED_ORIGINS = "https://binarydevil.github.io,http://localhost:5173,http://127.0.0.1:5173"
+ALLOWED_ORIGINS = "https://bunnyland.app,https://www.bunnyland.app,https://bunnyland.bunny-api.workers.dev,https://binarydevil.github.io,http://localhost:5173,http://127.0.0.1:5173"
 
 [[d1_databases]]
 binding = "DB"

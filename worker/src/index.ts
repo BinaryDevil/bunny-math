@@ -12,7 +12,7 @@ export interface Env {
   ALLOWED_ORIGINS?: string;
 }
 
-const DEFAULT_ORIGINS = 'https://binarydevil.github.io,http://localhost:5173,http://127.0.0.1:5173';
+const DEFAULT_ORIGINS = 'https://bunnyland.app,https://www.bunnyland.app,https://bunnyland.bunny-api.workers.dev,https://binarydevil.github.io,http://localhost:5173,http://127.0.0.1:5173';
 const NAME_TRIES = 10;
 const MAX_CODE_LENGTH = 32;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
