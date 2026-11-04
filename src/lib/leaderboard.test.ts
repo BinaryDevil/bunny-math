@@ -37,6 +37,27 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
+describe('a server that never answers', () => {
+  it('gives up after the time limit and keeps the queued runs', async () => {
+    vi.useFakeTimers();
+    try {
+      // Like a blocked network: the request hangs until it is cancelled.
+      vi.stubGlobal('fetch', (_url: string, init: RequestInit = {}) => new Promise((_, reject) => init.signal?.addEventListener('abort', () => reject(new Error('aborted')))));
+      localStorage.setItem('bunny-math:runs', JSON.stringify([{ runId: 'r1', code: 'C', level: 1, carrots: 12 }]));
+      const lb = await load();
+
+      const board = lb.fetchBoard();
+      const sent = lb.flush();
+      await vi.advanceTimersByTimeAsync(lb.TIMEOUT_MS);
+      expect(await board).toBeNull();
+      expect(await sent).toBeNull();
+      expect(JSON.parse(localStorage.getItem('bunny-math:runs')!)).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe('a saved player the server no longer knows', () => {
   it('keeps the queued runs and sends them as a new player', async () => {
     const sent = fakeServer();

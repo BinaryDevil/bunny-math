@@ -52,7 +52,7 @@ npm test
 npm run build && npm run test:e2e   # every screen, 9 languages, phone/landscape/desktop sizes in WebKit (~5 min); needs `npx playwright install webkit` once
 ```
 
-`npm run dev` runs without the leaderboard, which just doesn't show. To try it against the live server, put `VITE_LEADERBOARD_URL=https://bunny-api.bunny-api.workers.dev` in `.env.local`. Builds (`npm run build`) always use the address in `.env.production`.
+`npm run dev` runs without the leaderboard, which just doesn't show. To try it against the live server, put `VITE_LEADERBOARD_URL=https://api.bunnyland.app` in `.env.local`. Builds (`npm run build`) always use the address in `.env.production`.
 
 ## Deploy
 

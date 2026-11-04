@@ -3,6 +3,11 @@ name = "bunny-api"
 main = "src/index.ts"
 compatibility_date = "2026-10-15"
 
+# api.bunnyland.app is the address the app uses. China blocks *.workers.dev, so the old address
+# stays on only for copies of the app that were already open when the address changed.
+routes = [{ pattern = "api.bunnyland.app", custom_domain = true }]
+workers_dev = true
+
 [vars]
 # Sites allowed to call this server from a browser, comma-separated. Add yours if the site moves.
 ALLOWED_ORIGINS = "https://bunnyland.app,https://www.bunnyland.app,https://binarydevil.github.io,http://localhost:5173,http://127.0.0.1:5173"
