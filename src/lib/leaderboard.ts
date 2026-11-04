@@ -55,17 +55,26 @@ function forget(player: Player) {
   }
 }
 
+/** Gives up on the server after this long, so a blocked network can't leave "Loading…" up for minutes. */
+export const TIMEOUT_MS = 8000;
+
 async function call<T>(path: string, init: RequestInit & { secret?: string } = {}): Promise<{ status: number; body: T | null }> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (init.secret) headers.Authorization = `Bearer ${init.secret}`;
-  const res = await fetch(BASE + path, { ...init, headers });
-  let body: T | null = null;
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), TIMEOUT_MS);
   try {
-    body = (await res.json()) as T;
-  } catch {
-    // Not JSON: leave it empty.
+    const res = await fetch(BASE + path, { ...init, headers, signal: abort.signal });
+    let body: T | null = null;
+    try {
+      body = (await res.json()) as T;
+    } catch {
+      // Not JSON: leave it empty.
+    }
+    return { status: res.status, body };
+  } finally {
+    clearTimeout(timer);
   }
-  return { status: res.status, body };
 }
 
 let registering: Promise<Player | null> | null = null;

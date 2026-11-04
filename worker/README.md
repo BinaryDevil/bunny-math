@@ -8,9 +8,12 @@ and serves the leaderboard. The app calls it from the browser.
 
 ## Deploy
 
-It's live at `https://bunny-api.bunny-api.workers.dev`, with the `bunny-collection` database
-already made. Unlike the site, it isn't deployed automatically: after changing it, run these in
-this `worker/` folder.
+It's live at `https://api.bunnyland.app`, with the `bunny-collection` database already made.
+The old `https://bunny-api.bunny-api.workers.dev` address still works, but only for copies of the
+app opened before the move: mainland China blocks every `workers.dev` address, so the app must use
+`api.bunnyland.app`. Both are set in `wrangler.toml`.
+
+Unlike the site, it isn't deployed automatically: after changing it, run these in this `worker/` folder.
 
 1. `npm install`, and `npx wrangler login` once (opens a browser to sign in to Cloudflare)
 2. `npm run db:migrate` if you added a file to `migrations/`
