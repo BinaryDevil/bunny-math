@@ -6,3 +6,4 @@ worker/.wrangler
 *.local
 .wrangler
 redirect/404.html
+test-results/
