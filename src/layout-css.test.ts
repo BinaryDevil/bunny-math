@@ -52,3 +52,17 @@ describe('quiz screen never pushes the question card over the keypad or the top 
     expect(css).toMatch(/\n\.sheet \{[^}]*overflow-y:\s*auto/);
   });
 });
+
+describe('answer jolt (lib/shake.ts)', () => {
+  it('moves only with transform, and is switched off for reduced motion', () => {
+    for (const k of ['jolt-right', 'jolt-wrong']) {
+      const m = css.match(new RegExp(`@keyframes ${k} \\{(.*)\\}\\n`));
+      expect(m, k).not.toBeNull();
+      expect(m![1].replace(/transform:[^;]*;/g, '')).not.toMatch(/:/);
+    }
+    expect(css).toMatch(/\.quiz-body\.jolt-right \{ animation:/);
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\*, \*::before, \*::after \{ animation: none !important;/);
+    // The jolting box sits inside a screen that clips, so it can't cause a scrollbar.
+    expect(rule('.screen')).toMatch(/overflow:\s*hidden/);
+  });
+});

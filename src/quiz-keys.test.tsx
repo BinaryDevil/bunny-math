@@ -143,3 +143,24 @@ describe('best stars', () => {
     expect(JSON.parse(localStorage.getItem('bunny-math:v1')!).best[1] ?? 0).toBe(bestAfterQuiz);
   });
 });
+
+describe('feedback when an answer is judged', () => {
+  it('buzzes and jolts once for right and for wrong, in the same keypress', () => {
+    const vibrate = vi.fn(() => true);
+    Object.defineProperty(navigator, 'vibrate', { value: vibrate, configurable: true, writable: true });
+    act(() => render(<Quiz questions={[sum('q1'), sum('q2')]} onDone={() => {}} onQuit={() => {}} />, root));
+    const body = root.querySelector('.quiz-body')!;
+    key('9');
+    key('Enter');
+    expect(vibrate).toHaveBeenLastCalledWith([15, 80, 15]);
+    expect(body.classList.contains('jolt-wrong')).toBe(true);
+    key('Enter'); // try again
+    key('1');
+    key('5');
+    key('Enter');
+    expect(vibrate).toHaveBeenLastCalledWith([18]);
+    expect(root.querySelector('.quiz-body')!.classList.contains('jolt-right')).toBe(true);
+    expect(vibrate).toHaveBeenCalledTimes(2);
+    delete (navigator as unknown as Record<string, unknown>).vibrate;
+  });
+});

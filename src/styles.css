@@ -735,6 +735,12 @@ h1, h2, p { margin: 0; }
   .lang-pick > [aria-hidden]:first-child { display: none; } /* the globe; the language badge stays */
 }
 
+/* lib/shake.ts: the question area jolts when an answer is judged. Transform only, inside .screen's overflow: hidden. */
+.quiz-body.jolt-right { animation: jolt-right .24s ease-out; }
+.quiz-body.jolt-wrong { animation: jolt-wrong .34s ease-in-out; }
+@keyframes jolt-right { 40% { transform: translateY(-5px); } }
+@keyframes jolt-wrong { 15%, 65% { transform: translateX(-7px); } 40%, 90% { transform: translateX(7px); } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

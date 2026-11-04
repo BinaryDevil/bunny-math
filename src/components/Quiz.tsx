@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { t, useT, type MessageKey } from '../i18n';
 import { smallBurst } from '../lib/celebrate';
 import { compareSign, correctAnswer, opSymbol } from '../lib/generator';
+import { haptics } from '../lib/haptics';
+import { jolt } from '../lib/shake';
 import { sounds } from '../lib/sound';
 import type { Answer, CompareSign, Question } from '../lib/types';
 import { Bunny, type Mood } from './Bunny';
@@ -188,6 +190,7 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
   const [explaining, setExplaining] = useState(false);
   const [quitting, setQuitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   const { q, review } = items[idx];
   const answer = correctAnswer(q);
@@ -198,6 +201,8 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
     if (status !== 'ask') return;
     if (String(given) === String(answer)) {
       sounds.right();
+      haptics.right();
+      jolt(bodyRef.current, 'right');
       smallBurst(cardRef.current);
       setStatus('right');
       setInput(String(given));
@@ -208,6 +213,8 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
       return;
     }
     sounds.wrong();
+    haptics.wrong();
+    jolt(bodyRef.current, 'wrong');
     setWrongPicks((w) => [...w, given]);
     setInput(String(given));
     setTries((t) => t + 1);
@@ -316,7 +323,7 @@ export function Quiz({ questions, onDone, onQuit }: { questions: Question[]; onD
         <span class="count">{review ? t('quiz.again') : `${done + 1} / ${mainCount}`}</span>
       </header>
 
-      <div class="quiz-body">
+      <div class="quiz-body" ref={bodyRef}>
         <div class="q-pane">
           <div class="q-card" ref={cardRef}>
             {review ? <span class="review-tag">{t('quiz.oneMore')}</span> : <span class="tape" />}

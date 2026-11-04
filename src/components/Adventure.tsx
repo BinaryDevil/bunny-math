@@ -8,6 +8,8 @@ import {
   answer, BAG_SIZE, canUse, choosePath, current, isOver, perfectEarned, pickTreat, practiceFor, preview, startRun, useTreat,
   type Gain, type Outcome, type Run, type Treat,
 } from '../lib/run';
+import { haptics } from '../lib/haptics';
+import { jolt } from '../lib/shake';
 import { sounds } from '../lib/sound';
 import type { Answer, CompareSign, LevelId, Question, Skill } from '../lib/types';
 import { ExplainSheet } from './Explain';
@@ -203,6 +205,7 @@ function Ask({ run, onAnswer, onTreat, onQuit }: { run: Run; onAnswer: (o: Outco
   const [explaining, setExplaining] = useState(false);
   const [done, setDone] = useState<{ outcome: Outcome; gain: Gain } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const right = correctAnswer(q);
   const usesPad = q.kind === 'type' || q.kind === 'story' || q.kind === 'missing';
   const s = run.stage;
@@ -214,12 +217,16 @@ function Ask({ run, onAnswer, onTreat, onQuit }: { run: Run; onAnswer: (o: Outco
       const outcome: Outcome = tries > 0 ? 'second' : helped ? 'helped' : 'first';
       const gain = preview(run, outcome);
       gain.hit ? sounds.hit() : sounds.right();
+      haptics.right();
+      jolt(bodyRef.current, 'right');
       smallBurst(cardRef.current);
       setStatus('right');
       setInput(String(given));
       setDone({ outcome, gain });
       return;
     }
+    haptics.wrong();
+    jolt(bodyRef.current, 'wrong');
     setWrongPicks((w) => [...w, given]);
     setInput(String(given));
     setTries((x) => x + 1);
@@ -334,7 +341,7 @@ function Ask({ run, onAnswer, onTreat, onQuit }: { run: Run; onAnswer: (o: Outco
         </div>
       )}
 
-      <div class="quiz-body">
+      <div class="quiz-body" ref={bodyRef}>
         <div class="q-pane">
           <div class="q-card" ref={cardRef}>
             {comeback ? <span class="review-tag">{t('adv.again')}</span> : <span class="tape" />}
