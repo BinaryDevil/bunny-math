@@ -6,7 +6,8 @@ import type { Fact, Question } from './types';
 /**
  * Builds the "Show me how" steps for a question. Each step is one picture and one short line.
  * Two styles:
- * - blocks: base-ten blocks (a square is 100, a rod is 10, a cube is 1), and dot arrays for × and ÷
+ * - blocks ("Pictures"): base-ten blocks for + and − (a square is 100, a rod is 10, a cube is 1),
+ *   bunny hops on a number line for times tables, and a split box (the area model) for bigger × and ÷
  * - column: the written column method (竖式), one column at a time
  *
  * Captions use *stars* around the words to highlight. They are written in the current
@@ -34,8 +35,28 @@ export type ColRow = {
 export type Scene =
   | { type: 'blocks'; parts: (Group | '+')[]; result?: number }
   | { type: 'text'; lines: string[] }
-  /** `rows` rows of `cols` dots; with `totals`, each row shows the running count. */
-  | { type: 'array'; rows: number; cols: number; totals?: boolean; result?: number }
+  /**
+   * Bunny hops along a number line from 0 to `max`: `hops` jumps of `step`. For ÷, `goal` rings the
+   * end and `count` numbers the hops (1, 2, 3) instead of writing "+step" on them.
+   */
+  | { type: 'hops'; step: number; max: number; hops: number; goal?: boolean; count?: boolean; result?: number }
+  /**
+   * A box `rows` tall and `tens + ones` wide (the area model). `fill` colours in the parts, `split`
+   * draws the line between them and `inside` writes a number in each. `ask`: the width isn't known
+   * yet (÷), so the box is dashed and its top says "?". `width` writes the whole width on top (÷ answer).
+   */
+  | {
+      type: 'box';
+      rows: number;
+      tens: number;
+      ones: number;
+      fill?: { tens?: boolean; ones?: boolean };
+      split?: boolean;
+      inside?: { tens?: number; ones?: number };
+      ask?: boolean;
+      width?: boolean;
+      result?: number;
+    }
   /** `focus` is the column (from the left) being worked on. */
   | { type: 'column'; width: number; rows: ColRow[]; focus?: number; division?: boolean; result?: number };
 export type Step = { scene: Scene; caption: string };
@@ -167,61 +188,82 @@ function countBy(step: number, times: number) {
   return shown.map((n, i) => (i === shown.length - 1 ? `*${n}*` : n)).join(', ').replace(', …,', ' …');
 }
 
+/**
+ * Times: small facts are bunny hops (4 × 6 is 4 hops of 6). Bigger ones (23 × 4) are a box 4 rows
+ * tall and 23 wide, split into 20 and 3: 4 × 20 and 4 × 3, then add.
+ */
 function timesBlocks({ a, b, c }: Fact): Step[] {
   if (a <= 10 && b <= 10) {
+    const line = { type: 'hops', step: b, max: c } as const;
     return [
-      { scene: { type: 'array', rows: a, cols: b }, caption: t('ex.rowsOf', { a, b }) },
-      { scene: { type: 'array', rows: a, cols: b, totals: true }, caption: t('ex.countBy', { b, list: countBy(b, a) }) },
-      { scene: { type: 'array', rows: a, cols: b, totals: true, result: c }, caption: `${a} × ${b} = *${c}*` },
+      { scene: { ...line, hops: 0 }, caption: t('ex.hopsOf', { a, b }) },
+      { scene: { ...line, hops: a }, caption: t('ex.countBy', { b, list: countBy(b, a) }) },
+      { scene: { ...line, hops: a, result: c }, caption: `${a} × ${b} = *${c}*` },
     ];
   }
   const big = Math.max(a, b);
-  const n = Math.min(a, b);
-  const tensPart = big - O(big);
-  const steps: Step[] = [
-    {
-      scene: { type: 'blocks', parts: Array.from({ length: n }, () => group(big, 'a')) },
-      caption: t('ex.groupsOf', { a, b, n, big }),
-    },
-  ];
-  if (O(big) === 0) {
-    const tens = unit('ten', T(big));
-    const total = unit('ten', n * T(big));
-    steps.push({ scene: { type: 'text', lines: [`${n} × ${tens} = ${total}`] }, caption: t('ex.lotsOfTens', { n, t: tens, x: total }) });
-  } else {
+  const rows = Math.min(a, b);
+  const tens = big - O(big);
+  const ones = O(big);
+  const box = { type: 'box', rows, tens, ones } as const;
+  const steps: Step[] = [{ scene: box, caption: t('ex.boxOf', { a, b, n: rows, big }) }];
+  if (ones === 0) {
+    const tensWord = unit('ten', T(big));
+    const total = unit('ten', rows * T(big));
     steps.push(
-      { scene: { type: 'text', lines: [`${big} = ${tensPart} + ${O(big)}`] }, caption: t('ex.split', { big }) },
-      { scene: { type: 'text', lines: [`${n} × ${tensPart} = ${n * tensPart}`] }, caption: t('ex.lotsOf', { n, m: tensPart, x: n * tensPart }) },
-      { scene: { type: 'text', lines: [`${n} × ${O(big)} = ${n * O(big)}`] }, caption: t('ex.lotsOf', { n, m: O(big), x: n * O(big) }) },
+      { scene: { ...box, fill: { tens: true }, inside: { tens: c } }, caption: t('ex.lotsOfTens', { n: rows, t: tensWord, x: total }) },
+      { scene: { ...box, fill: { tens: true }, inside: { tens: c }, result: c }, caption: t('ex.thats', { c }) },
     );
+    return steps;
   }
-  steps.push({
-    scene: { type: 'blocks', parts: [group(c, 'a')], result: c },
-    caption: O(big) === 0 ? t('ex.thats', { c }) : `${n * tensPart} + ${n * O(big)} = *${c}*`,
-  });
+  const x = rows * tens;
+  const y = rows * ones;
+  const split = { ...box, split: true };
+  steps.push(
+    { scene: split, caption: t('ex.split', { big }) },
+    { scene: { ...split, fill: { tens: true }, inside: { tens: x } }, caption: `${rows} × ${tens} = *${x}*` },
+    { scene: { ...split, fill: { tens: true, ones: true }, inside: { tens: x, ones: y } }, caption: `${rows} × ${ones} = *${y}*` },
+    { scene: { ...split, fill: { tens: true, ones: true }, inside: { tens: x, ones: y }, result: c }, caption: `${x} + ${y} = *${c}*` },
+  );
   return steps;
 }
 
+/**
+ * Divide: small answers are bunny hops (24 ÷ 6: how many hops of 6 get to 24?). Bigger ones (84 ÷ 6)
+ * are the same box as times with the width missing: 84 squares in 6 rows. Put 10 in each row (60),
+ * share out the 24 left over (4 more each), so each row is 14.
+ */
 function divideBlocks({ a, b, c }: Fact): Step[] {
   if (c <= 10) {
+    const line = { type: 'hops', step: b, max: a, goal: true, count: true } as const;
     return [
-      { scene: { type: 'blocks', parts: [group(a, 'a')] }, caption: t('ex.howManyIn', { a, b }) },
-      { scene: { type: 'array', rows: c, cols: b, totals: true }, caption: t('ex.rowsOfB', { b, list: countBy(b, c) }) },
-      { scene: { type: 'array', rows: c, cols: b, totals: true, result: c }, caption: t('ex.thatsRows', { a, b, c }) },
+      { scene: { ...line, hops: 0 }, caption: t('ex.howManyHops', { a, b }) },
+      { scene: { ...line, hops: c }, caption: t('ex.countBy', { b, list: countBy(b, c) }) },
+      { scene: { ...line, hops: c, result: c }, caption: t('ex.thatsHops', { a, b, c }) },
     ];
   }
-  const easy = Math.floor(a / (10 * b)) * 10 * b;
+  const tens = c - O(c);
+  const ones = O(c);
+  const easy = tens * b;
   const rest = a - easy;
+  const box = { type: 'box', rows: b, tens, ones } as const;
   const steps: Step[] = [
-    { scene: { type: 'blocks', parts: [group(a, 'a')] }, caption: t('ex.share', { a, b }) },
-    { scene: { type: 'text', lines: [rest ? `${a} = ${easy} + ${rest}` : `${a} = ${easy}`] }, caption: rest ? t('ex.splitEasy', { a }) : t('ex.easy', { a }) },
-    { scene: { type: 'text', lines: [`${easy} ÷ ${b} = ${easy / b}`] }, caption: t('ex.eachGets', { n: easy / b }) },
+    { scene: { ...box, ask: true }, caption: t('ex.boxRows', { a, b }) },
+    { scene: { ...box, ask: true, fill: { tens: true }, inside: { tens: easy } }, caption: t('ex.putIn', { x: tens, b, easy }) },
   ];
-  if (rest) steps.push({ scene: { type: 'text', lines: [`${rest} ÷ ${b} = ${rest / b}`] }, caption: t('ex.andMore', { n: rest / b }) });
-  steps.push({
-    scene: { type: 'blocks', parts: Array.from({ length: b }, () => group(c, 'a')), result: c },
-    caption: rest ? t('ex.inEachSum', { x: easy / b, y: rest / b, c }) : t('ex.inEach', { c }),
-  });
+  if (!rest) {
+    steps.push({ scene: { ...box, fill: { tens: true }, inside: { tens: easy }, width: true, result: c }, caption: t('ex.rowIsAll', { c }) });
+    return steps;
+  }
+  const split = { ...box, split: true };
+  steps.push(
+    { scene: { ...box, ask: true, fill: { tens: true }, inside: { tens: easy } }, caption: t('ex.leftOver', { a, easy, rest }) },
+    { scene: { ...split, fill: { tens: true, ones: true }, inside: { tens: easy, ones: rest } }, caption: t('ex.moreEach', { rest, b, y: ones }) },
+    {
+      scene: { ...split, fill: { tens: true, ones: true }, inside: { tens: easy, ones: rest }, width: true, result: c },
+      caption: t('ex.rowIs', { x: tens, y: ones, c }),
+    },
+  );
   return steps;
 }
 
