@@ -51,6 +51,10 @@ describe('quiz screen never pushes the question card over the keypad or the top 
   it('lets the explanation sheet scroll, so Next stays reachable', () => {
     expect(css).toMatch(/\n\.sheet \{[^}]*overflow-y:\s*auto/);
   });
+
+  it('grows the panel around bunny hops and the split box instead of cutting them off', () => {
+    expect(css).toMatch(/\.stage:has\(> \.hops, > \.area\) \{[^}]*min-height:\s*min-content/);
+  });
 });
 
 describe('answer jolt (lib/shake.ts)', () => {

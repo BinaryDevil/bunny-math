@@ -371,6 +371,11 @@ h1, h2, p { margin: 0; }
 .legend .flat { width: 16px; background-size: 20% 20%; }
 .stage.many { gap: clamp(8px, 2vw, 18px); }
 
+/* Hops and the split box have no legend, so they don't need the panel's tall top padding. */
+/* And they never get cut off: on the smallest phones the panel grows and the sheet scrolls instead. */
+.stage:has(> .hops, > .area) { padding-top: 16px; row-gap: 4px; min-height: min-content; }
+.stage:has(> .hops, > .area) > .tally { font-size: clamp(24px, 6vw, 36px); }
+
 /* Bunny hops on a number line (times tables, and divide by counting hops) */
 .hops { flex: 1 1 100%; max-width: 760px; padding: 0 clamp(14px, 3vw, 28px); font-weight: 800; }
 .hop-track { position: relative; height: clamp(110px, 26dvh, 200px); }
@@ -423,7 +428,7 @@ h1, h2, p { margin: 0; }
 .area-part.on.part-ones { background-color: var(--mint); }
 .area-part.on { animation: fill-in .4s ease-out; }
 .area-part.ghost { border-style: dashed; border-color: var(--ink-soft); background-image: none; background-color: transparent; }
-.area-part b { font-size: clamp(20px, 4.4vw, 32px); color: #4B2A5C; background: rgba(255,255,255,.75); padding: 0 .25em; border-radius: 8px; animation: pop .35s ease-out; }
+.area-part b { font-size: clamp(20px, 4.4vw, 32px); line-height: 1.2; color: #4B2A5C; background: rgba(255,255,255,.75); padding: 0 .25em; border-radius: 8px; animation: pop .35s ease-out; }
 @keyframes fill-in { from { background-color: var(--card); } }
 
 /* Column method (竖式) */
@@ -702,6 +707,16 @@ h1, h2, p { margin: 0; }
   /* The panel fills the sheet's height, so the blocks get every pixel the phone has. */
   .scrim .sheet { height: 90dvh; }
   .stage { height: auto; }
+  /* Hops and the split box fit the short panel: a lower hop track, and the box's answer beside
+     it (there's room sideways, not up and down) with the box never taller than the panel. */
+  .hop-track { height: clamp(70px, 24dvh, 120px); }
+  .hops { padding: 0 10px; }
+  .hops.tight :is(.hop-label, .hop-num) { font-size: clamp(12px, 1.9vw, 17px); }
+  .stage:has(> .area) { flex-wrap: nowrap; }
+  .stage:has(> .area) > .tally { flex: none; }
+  .area { flex: 1 1 auto; min-width: 0; }
+  .area-box { height: clamp(max(var(--rows) * 12px, 40px), calc(100cqw * var(--rows) / var(--cols)), min(calc(var(--rows) * 46px), 100dvh - 280px)); }
+  .area-part b { font-size: 22px; }
   .fb-face { display: none; }
   .feedback { padding-top: 10px; padding-bottom: 10px; }
   .story-pic { font-size: 40px; }
@@ -770,6 +785,8 @@ h1, h2, p { margin: 0; }
   /* "Show me how" */
   .sheet { gap: 8px; padding-top: 14px; }
   .stage { min-height: 150px; padding-top: 30px; }
+  .stage:has(> .hops, > .area) { padding-top: 16px; }
+  .hop-track { height: clamp(80px, 18dvh, 200px); }
   .sheet-foot .puffy { min-height: 48px; }
 }
 @media (orientation: portrait) and (max-width: 350px) {
