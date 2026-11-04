@@ -371,15 +371,60 @@ h1, h2, p { margin: 0; }
 .legend .flat { width: 16px; background-size: 20% 20%; }
 .stage.many { gap: clamp(8px, 2vw, 18px); }
 
-/* Dot arrays for times and divide */
-.dot-array {
-  --d: clamp(8px, min(calc(40dvh / var(--rows)), calc(36vw / (var(--cols) + 2))), 30px);
-  display: flex; flex-direction: column; gap: calc(var(--d) * .35);
+/* Bunny hops on a number line (times tables, and divide by counting hops) */
+.hops { flex: 1 1 100%; max-width: 760px; padding: 0 clamp(14px, 3vw, 28px); font-weight: 800; }
+.hop-track { position: relative; height: clamp(110px, 26dvh, 200px); }
+.hop-arcs { position: absolute; left: 0; right: 0; top: 30px; bottom: 0; width: 100%; height: calc(100% - 30px); overflow: visible; }
+.hop-arcs path { fill: none; stroke: var(--berry); stroke-width: 3.5px; stroke-linecap: round; animation: arc-in .35s ease-out both; }
+.hop-label { position: absolute; top: 0; transform: translateX(-50%); font-size: clamp(15px, 3.6vw, 20px); color: var(--berry); white-space: nowrap; animation: hop-in .35s ease-out both; }
+.hops.tight .hop-label { font-size: clamp(12px, 2.6vw, 17px); }
+.hop-goal { position: absolute; bottom: -13px; width: 26px; height: 26px; transform: translateX(-50%); border: 3px solid var(--lilac); border-radius: 50%; }
+.hopper { position: absolute; bottom: 2px; width: clamp(30px, 6vw, 42px); transform: translateX(-50%); animation: pop .35s cubic-bezier(.3,1.6,.5,1) both; }
+.hop-line { position: relative; height: 40px; border-top: 3px solid var(--ink); }
+.hop-line .tick { position: absolute; top: -7px; width: 2px; height: 10px; margin-left: -1px; background: var(--ink-soft); }
+.hop-line .tick.big { top: -10px; height: 16px; width: 3px; margin-left: -1.5px; background: var(--ink); }
+.hop-num { position: absolute; top: 10px; transform: translateX(-50%); font-size: clamp(15px, 3.6vw, 21px); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.hops.tight .hop-num { font-size: clamp(13px, 2.8vw, 19px); }
+.hop-num .tick.big { left: 50%; top: -20px; }
+.hop-num.on { color: var(--berry); }
+.hop-num.goal { color: var(--ink); }
+@keyframes hop-in { from { opacity: 0; transform: translateX(-50%) translateY(8px); } }
+@keyframes arc-in { from { opacity: 0; } }
+
+/* The split box (area model) for bigger times and divide */
+.area { flex: 1 1 100%; max-width: 720px; display: flex; align-items: center; gap: 10px; font-weight: 800; }
+.area-rows { font-size: clamp(20px, 4vw, 28px); color: var(--ink); }
+.area-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; container-type: inline-size; }
+.area-top { align-self: center; font-size: clamp(20px, 4vw, 28px); color: var(--ink); }
+.area-top.ask { color: var(--ink-soft); }
+.area-top.answer { color: var(--berry); animation: pop .4s cubic-bezier(.3,1.6,.5,1); }
+.area-labels { display: flex; gap: 6px; font-size: clamp(17px, 3.4vw, 24px); text-align: center; }
+.area-labels span { flex-basis: 0; min-width: 3.2em; }
+.area-labels .part-tens { color: var(--lilac); }
+.area-labels .part-ones { color: var(--mint); }
+/* Square cells when there's room; wide boxes (6 × 49) get taller cells so each row is still easy to see. */
+.area-box {
+  display: flex;
+  height: clamp(calc(var(--rows) * 22px), calc(100cqw * var(--rows) / var(--cols)), min(calc(var(--rows) * 46px), 44dvh));
 }
-.dot-row { display: flex; align-items: center; gap: calc(var(--d) * .35); }
-.dot-row i { width: var(--d); height: var(--d); flex: none; border-radius: 50%; border: 2px solid var(--ink); background: var(--lilac); }
-.dot-row.b i { background: var(--berry); }
-.dot-total { margin-left: .5em; min-width: 2ch; font-weight: 800; font-size: max(16px, calc(var(--d) * .9)); color: var(--ink-soft); animation: pop .3s ease-out; }
+.area-box.split { gap: 6px; }
+.area-part {
+  position: relative; flex-basis: 0; min-width: 3.2em;
+  display: grid; place-items: center;
+  border: 2.5px solid var(--ink); border-radius: 6px;
+  background-color: var(--card);
+  background-image: linear-gradient(rgba(140,110,155,.35) 1px, transparent 1px), linear-gradient(90deg, rgba(140,110,155,.35) 1px, transparent 1px);
+  background-size: calc(100% / var(--n)) calc(100% / var(--rows));
+  background-position: -1px -1px;
+}
+.area-box:not(.split) .area-part:not(:only-child):first-child { border-right: 0; border-radius: 6px 0 0 6px; }
+.area-box:not(.split) .area-part:not(:only-child):last-child { border-left: 0; border-radius: 0 6px 6px 0; }
+.area-part.on.part-tens { background-color: var(--lilac); }
+.area-part.on.part-ones { background-color: var(--mint); }
+.area-part.on { animation: fill-in .4s ease-out; }
+.area-part.ghost { border-style: dashed; border-color: var(--ink-soft); background-image: none; background-color: transparent; }
+.area-part b { font-size: clamp(20px, 4.4vw, 32px); color: #4B2A5C; background: rgba(255,255,255,.75); padding: 0 .25em; border-radius: 8px; animation: pop .35s ease-out; }
+@keyframes fill-in { from { background-color: var(--card); } }
 
 /* Column method (竖式) */
 .column-sum {

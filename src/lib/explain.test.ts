@@ -48,8 +48,54 @@ describe('blocks', () => {
     ]);
   });
 
-  it('3 × 4 counts rows of 4', () => {
-    expect(captions({ a: 3, op: '×', b: 4, c: 12 })).toEqual(['*3 × 4* means *3 rows* of *4*.', 'Count by 4s: 4, 8, *12*', '3 × 4 = *12*']);
+  it('3 × 4 is 3 hops of 4', () => {
+    const steps = factSteps({ a: 3, op: '×', b: 4, c: 12 });
+    expect(steps.map((s) => s.caption)).toEqual(['*3 × 4* means *3 hops* of *4*.', 'Count by 4s: 4, 8, *12*', '3 × 4 = *12*']);
+    expect(steps.map((s) => s.scene.type === 'hops' && [s.scene.step, s.scene.hops, s.scene.max])).toEqual([[4, 0, 12], [4, 3, 12], [4, 3, 12]]);
+  });
+
+  it('24 ÷ 6 counts hops of 6 to 24', () => {
+    const steps = factSteps({ a: 24, op: '÷', b: 6, c: 4 });
+    expect(steps.map((s) => s.caption)).toEqual([
+      '*24 ÷ 6*: how many *hops of 6* get to 24?',
+      'Count by 6s: 6, 12, 18, *24*',
+      "That's *4 hops*. 24 ÷ 6 = *4*",
+    ]);
+    expect(steps.every((s) => s.scene.type === 'hops' && s.scene.goal && s.scene.count)).toBe(true);
+  });
+
+  it('6 × 14 splits the box into 10 and 4', () => {
+    expect(captions({ a: 6, op: '×', b: 14, c: 84 })).toEqual([
+      '6 × 14: a box of *6 rows* of *14*.',
+      'Split *14* into tens and ones.',
+      '6 × 10 = *60*',
+      '6 × 4 = *24*',
+      '60 + 24 = *84*',
+    ]);
+  });
+
+  it('6 × 30 is one box of tens', () => {
+    expect(captions({ a: 6, op: '×', b: 30, c: 180 })).toEqual(['6 × 30: a box of *6 rows* of *30*.', '6 lots of *3 tens* is *18 tens*.', "That's *180*!"]);
+  });
+
+  it('84 ÷ 6 finds how long each row is', () => {
+    const steps = factSteps({ a: 84, op: '÷', b: 6, c: 14 });
+    expect(steps.map((s) => s.caption)).toEqual([
+      '*84* squares in *6 rows*. How long is each row?',
+      'Put *10* in each row: 6 × 10 = 60.',
+      '84 − 60 = *24* left over.',
+      '24 ÷ 6 = *4* more in each row.',
+      'Each row is 10 + 4 = *14*.',
+    ]);
+    expect(steps.map((s) => s.scene.type === 'box' && !!s.scene.ask)).toEqual([true, true, true, false, false]);
+  });
+
+  it('80 ÷ 4 has nothing left over after the tens', () => {
+    expect(captions({ a: 80, op: '÷', b: 4, c: 20 })).toEqual([
+      '*80* squares in *4 rows*. How long is each row?',
+      'Put *20* in each row: 4 × 20 = 80.',
+      'Nothing left over. Each row is *20*!',
+    ]);
   });
 });
 
@@ -136,6 +182,34 @@ describe('every question, both styles', () => {
       const answerRow = final.type === 'column' && final.division ? 0 : final.type === 'column' ? final.rows.length - 1 : -1;
       const got = rowValue(final, answerRow);
       if (got !== want) problems.push(`${sum}: answer row reads ${got}, want ${want}`);
+    }
+    expect(problems.slice(0, 10)).toEqual([]);
+  });
+
+  it('times and divide pictures add up', () => {
+    const problems: string[] = [];
+    for (const q of quizzes) {
+      const f = q.kind === 'missing' ? null : q.fact;
+      const sum = `${q.fact.a} ${q.fact.op} ${q.fact.b}`;
+      for (const s of explain(q, 'blocks')) {
+        const sc = s.scene;
+        if (sc.type === 'hops') {
+          // The bunny never hops past the end of the line, and lands on it at the end.
+          if (sc.hops * sc.step > sc.max) problems.push(`${sum}: hops past the end`);
+          if (sc.result !== undefined && sc.hops * sc.step !== sc.max) problems.push(`${sum}: last hop misses the end`);
+          if (sc.hops > 10) problems.push(`${sum}: ${sc.hops} hops`);
+        }
+        if (sc.type === 'box') {
+          // The box holds the whole sum (rows × width), and what's written inside adds up to it.
+          const area = sc.rows * (sc.tens + sc.ones);
+          if (f && area !== (f.op === '×' ? f.c : f.a)) problems.push(`${sum}: box holds ${area}`);
+          if (sc.tens % 10 || sc.ones > 9) problems.push(`${sum}: box split ${sc.tens} + ${sc.ones}`);
+          if (sc.rows > 9) problems.push(`${sum}: box has ${sc.rows} rows`);
+          const inside = (sc.inside?.tens ?? 0) + (sc.inside?.ones ?? 0);
+          if (sc.fill?.tens && sc.inside?.tens !== sc.rows * sc.tens) problems.push(`${sum}: tens part says ${sc.inside?.tens}`);
+          if (sc.fill?.ones && inside !== area) problems.push(`${sum}: box says ${inside}, holds ${area}`);
+        }
+      }
     }
     expect(problems.slice(0, 10)).toEqual([]);
   });

@@ -14,7 +14,7 @@ export const ExplainPref = createContext<{ style: ExplainStyle; setStyle: (s: Ex
 });
 
 const STYLES: { id: ExplainStyle; label: MessageKey }[] = [
-  { id: 'blocks', label: 'sheet.blocks' },
+  { id: 'blocks', label: 'sheet.pictures' },
   { id: 'column', label: 'sheet.columns' },
 ];
 
@@ -67,21 +67,104 @@ function Blocks({ group }: { group: Group }) {
   );
 }
 
-function ArrayView({ scene }: { scene: Extract<Scene, { type: 'array' }> }) {
-  const { rows, cols, totals, result } = scene;
+/** The little bunny that hops along the number line. */
+function Hopper({ at, delay }: { at: number; delay: number }) {
+  return (
+    <svg class="hopper" style={{ left: `${at}%`, animationDelay: `${delay}s` }} viewBox="0 0 40 46" aria-hidden="true">
+      <g stroke="var(--ink)" stroke-width="2.5" fill="#fff">
+        <ellipse cx="13" cy="14" rx="5" ry="12" transform="rotate(-8 13 14)" />
+        <ellipse cx="27" cy="14" rx="5" ry="12" transform="rotate(8 27 14)" />
+        <ellipse cx="20" cy="32" rx="15" ry="12.5" />
+      </g>
+      <ellipse cx="13" cy="15" rx="2" ry="7" fill="#FFD3E4" transform="rotate(-8 13 15)" />
+      <ellipse cx="27" cy="15" rx="2" ry="7" fill="#FFD3E4" transform="rotate(8 27 15)" />
+      <circle cx="15" cy="31" r="2" fill="#4B2A5C" />
+      <circle cx="25" cy="31" r="2" fill="#4B2A5C" />
+    </svg>
+  );
+}
+
+/** Seconds between hops, so even 10 hops are done in about 2.5 seconds. */
+const hopGap = (hops: number) => Math.min(0.4, 2.5 / Math.max(hops, 1));
+
+function HopsView({ scene }: { scene: Extract<Scene, { type: 'hops' }> }) {
+  const { step, max, hops, goal, count, result } = scene;
+  const pct = (n: number) => (n / max) * 100;
+  const gap = hopGap(hops);
+  const marks = Array.from({ length: Math.floor(max / step) + 1 }, (_, k) => k * step);
   return (
     <div class="stage">
-      <div class="dot-array" style={{ '--rows': rows, '--cols': cols }}>
-        {Array.from({ length: rows }, (_, r) => (
-          <div key={r} class={`dot-row ${r % 2 ? 'b' : 'a'}`}>
-            {Array.from({ length: cols }, (_, c) => (
-              <i key={c} />
+      <div class={`hops ${hops > 6 ? 'tight' : ''}`}>
+        <div class="hop-track">
+          <svg class="hop-arcs" viewBox={`0 0 ${max} 100`} preserveAspectRatio="none" aria-hidden="true">
+            {Array.from({ length: hops }, (_, k) => (
+              <path
+                key={k}
+                d={`M${k * step} 100 Q${(k + 0.5) * step} -100 ${(k + 1) * step} 100`}
+                vector-effect="non-scaling-stroke"
+                style={{ animationDelay: `${k * gap}s` }}
+              />
             ))}
-            {totals && <span class="dot-total">{(r + 1) * cols}</span>}
-          </div>
-        ))}
+          </svg>
+          {Array.from({ length: hops }, (_, k) => (
+            <span key={k} class="hop-label" style={{ left: `${pct((k + 0.5) * step)}%`, animationDelay: `${k * gap}s` }}>
+              {count ? k + 1 : `+${step}`}
+            </span>
+          ))}
+          {goal && <span class="hop-goal" style={{ left: '100%' }} />}
+          <Hopper at={pct(hops * step)} delay={hops ? hops * gap : 0} />
+        </div>
+        <div class="hop-line">
+          {max <= 40 && Array.from({ length: max + 1 }, (_, n) => <i key={n} class="tick" style={{ left: `${pct(n)}%` }} />)}
+          {marks.map((n, k) => (
+            <span key={n} class={`hop-num ${k && k <= hops ? 'on' : ''} ${goal && n === max ? 'goal' : ''}`} style={{ left: `${pct(n)}%` }}>
+              <i class="tick big" />
+              {k === 0 || k <= hops || (goal && n === max) ? n : ''}
+            </span>
+          ))}
+        </div>
       </div>
-      {result !== undefined && <span class="tally">= {result}</span>}
+      {result !== undefined && !count && <span class="tally">= {result}</span>}
+    </div>
+  );
+}
+
+function BoxView({ scene }: { scene: Extract<Scene, { type: 'box' }> }) {
+  const { rows, tens, ones, fill = {}, split, inside = {}, ask, width, result } = scene;
+  const parts = [
+    { id: 'tens' as const, n: tens },
+    ...(ones ? [{ id: 'ones' as const, n: ones }] : []),
+  ];
+  const top = ask ? '?' : !split || width ? String(tens + ones) : null;
+  return (
+    <div class="stage">
+      <div class="area" style={{ '--rows': rows, '--cols': tens + ones }}>
+        <span class="area-rows">{rows}</span>
+        <div class="area-main">
+          {top && <span class={`area-top ${width ? 'answer' : ''} ${ask ? 'ask' : ''}`}>{top}</span>}
+          {split && (
+            <div class="area-labels">
+              {parts.map((p) => (
+                <span key={p.id} class={`part-${p.id}`} style={{ flexGrow: p.n }}>
+                  {p.n}
+                </span>
+              ))}
+            </div>
+          )}
+          <div class={`area-box ${split ? 'split' : ''} ${ask ? 'ask' : ''}`}>
+            {parts.map((p) => (
+              <div
+                key={p.id}
+                class={`area-part part-${p.id} ${fill[p.id] ? 'on' : ''} ${ask && !fill[p.id] ? 'ghost' : ''}`}
+                style={{ flexGrow: p.n, '--n': p.n }}
+              >
+                {inside[p.id] !== undefined && <b>{inside[p.id]}</b>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      {result !== undefined && !width && <span class="tally">= {result}</span>}
     </div>
   );
 }
@@ -231,7 +314,8 @@ function BlocksView({ scene }: { scene: Extract<Scene, { type: 'blocks' }> }) {
 }
 
 function Stage({ scene }: { scene: Scene }) {
-  if (scene.type === 'array') return <ArrayView scene={scene} />;
+  if (scene.type === 'hops') return <HopsView scene={scene} />;
+  if (scene.type === 'box') return <BoxView scene={scene} />;
   if (scene.type === 'column') return <ColumnView scene={scene} />;
   if (scene.type === 'text') {
     return (

@@ -180,7 +180,7 @@ export const en = {
   'book.empty': 'not found yet',
 
   // "Show me how" sheet
-  'sheet.blocks': '🧱 Blocks',
+  'sheet.pictures': '🐰 Pictures',
   'sheet.columns': '✏️ Columns',
   'sheet.aria': 'How to solve {q}',
   'sheet.showWith': 'Show it with',
@@ -241,23 +241,20 @@ export const en = {
   'ex.left': '*{c}* left!',
 
   // Explanations: blocks, times and divide
-  'ex.rowsOf': '*{a} × {b}* means *{a} rows* of *{b}*.',
+  'ex.hopsOf': '*{a} × {b}* means *{a} hops* of *{b}*.',
   'ex.countBy': 'Count by {b}s: {list}',
-  'ex.groupsOf': '{a} × {b} means *{n} groups* of *{big}*.',
-  'ex.lotsOfTens': '{n} lots of *{t}* is *{x}*.',
+  'ex.howManyHops': '*{a} ÷ {b}*: how many *hops of {b}* get to {a}?',
+  'ex.thatsHops': "That's *{c} hops*. {a} ÷ {b} = *{c}*",
+  'ex.boxOf': '{a} × {b}: a box of *{n} rows* of *{big}*.',
   'ex.split': 'Split *{big}* into tens and ones.',
-  'ex.lotsOf': '{n} lots of {m}: *{x}*',
+  'ex.lotsOfTens': '{n} lots of *{t}* is *{x}*.',
   'ex.thats': "That's *{c}*!",
-  'ex.howManyIn': '*{a} ÷ {b}*: how many *{b}s* make {a}?',
-  'ex.rowsOfB': 'Make rows of {b}: {list}',
-  'ex.thatsRows': "That's *{c} rows*. {a} ÷ {b} = *{c}*",
-  'ex.share': 'Share *{a}* into *{b}* equal groups.',
-  'ex.splitEasy': 'Split {a} into parts that are easy to share.',
-  'ex.easy': '{a} is easy to share!',
-  'ex.eachGets': 'Each group gets *{n}*…',
-  'ex.andMore': '…and *{n}* more.',
-  'ex.inEachSum': '{x} + {y} = *{c}* in each group.',
-  'ex.inEach': '*{c}* in each group.',
+  'ex.boxRows': '*{a}* squares in *{b} rows*. How long is each row?',
+  'ex.putIn': 'Put *{x}* in each row: {b} × {x} = {easy}.',
+  'ex.leftOver': '{a} − {easy} = *{rest}* left over.',
+  'ex.moreEach': '{rest} ÷ {b} = *{y}* more in each row.',
+  'ex.rowIs': 'Each row is {x} + {y} = *{c}*.',
+  'ex.rowIsAll': 'Nothing left over. Each row is *{c}*!',
 
   // Explanations: column method
   'ex.stack': 'Stack them up: *ones under ones*.',
