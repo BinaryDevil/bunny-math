@@ -218,11 +218,11 @@ async function walk(size, lang) {
 
     if (run.mode === 'plus') {
       await tap(page, '.topbar .icon-btn'); // home
-      await tap(page, '.topbar .icon-btn', 1); // stickers
+      await tap(page, '.topbar .icon-btn:text-is("📒")'); // stickers
       await page.waitForSelector('.book');
       await check(page, `stickers ${tag}`, `s-stickers-${tag}`);
       await tap(page, '.topbar .icon-btn');
-      await tap(page, '.topbar .icon-btn', 0); // worksheet
+      await tap(page, '.topbar .icon-btn:text-is("🖨️")'); // worksheet
       await page.waitForSelector('.print-bar');
       await check(page, `worksheet ${tag}`, `s-worksheet-${tag}`);
     }

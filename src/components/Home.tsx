@@ -10,6 +10,7 @@ import type { LevelId, Mode } from '../lib/types';
 import { Bunny } from './Bunny';
 import { LangPicker } from './LangPicker';
 import { Rascal } from './Rascal';
+import { Warmup } from './Warmup';
 import { CodeEntry } from './Share';
 
 type Props = {
@@ -82,7 +83,12 @@ export function Home({ saved, mode, level, lang, onLang, onLevel, onMode, onChan
     <section class="screen">
       <header class="topbar">
         <button class="puffy mode-btn" aria-label={t('home.modeAria', { mode: t(`mode.${mode}.name`) })} onClick={onMode}>
-          {MODES[mode].signs} <span aria-hidden="true">▾</span>
+          <span class="signs">
+            {MODES[mode].signs.split(' ').map((s) => (
+              <span key={s}>{s}</span>
+            ))}
+          </span>
+          <span class="caret" aria-hidden="true">▾</span>
         </button>
         <span class="spacer" />
         <LangPicker lang={lang} onChange={onLang} />
@@ -157,6 +163,7 @@ export function Home({ saved, mode, level, lang, onLang, onLevel, onMode, onChan
         </div>
       </div>
       {coding && <CodeEntry initial={pendingCode} onClose={() => { setCoding(false); onCodeClosed(); }} onPlay={(c, text) => { setCoding(false); onCode(c, text); }} />}
+      <Warmup level={level} />
     </section>
   );
 }

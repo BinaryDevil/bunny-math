@@ -540,6 +540,9 @@ function End({ run, code, best, jar, posted, onHome, onRematch, onNew, onPractic
           <button class="puffy" onClick={onNew}>
             {t('adv.end.new')}
           </button>
+          <button class="puffy" onClick={onHome}>
+            <span aria-hidden="true">🏠</span> {t('res.home')}
+          </button>
         </div>
       </div>
     </section>

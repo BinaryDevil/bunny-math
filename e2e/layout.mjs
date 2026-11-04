@@ -112,7 +112,8 @@ for (const size of SIZES) {
       const r = await page.evaluate(inspect);
       if (mode === 'plus') await page.screenshot({ path: join(SHOTS, `home-${lang}-${size[0]}x${size[1]}.png`) });
       r.problems.push(...(await checkStart(page)));
-      if (r.controls !== 5) r.problems.push(`expected 5 top-bar controls, found ${r.controls}`);
+      // Mode, language, code, print, stickers, sound.
+      if (r.controls !== 6) r.problems.push(`expected 6 top-bar controls, found ${r.controls}`);
       results.push({ screen: `home/${mode}`, lang, size: size.join('x'), ok: !r.problems.length, title: r.title });
       if (r.problems.length) failures.push(`home/${mode} ${lang} ${size.join('x')}: ${r.problems.join('; ')}`);
       await page.context().close();

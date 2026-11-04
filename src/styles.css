@@ -108,6 +108,10 @@ h1, h2, p { margin: 0; }
   overflow: hidden;
 }
 
+/* Warmup.tsx: invisible question screens, laid out once so the first real one opens without a hitch. */
+.warmup { position: fixed; inset: 0; visibility: hidden; pointer-events: none; z-index: -1; overflow: hidden; }
+.warmup > .screen { position: absolute; inset: 0; }
+
 /* ---------- Top bar ---------- */
 /*
  * The bar never shrinks, and it sits above the rest of the screen: even if something below
@@ -237,7 +241,8 @@ h1, h2, p { margin: 0; }
   height: clamp(52px, 8.2dvh, 84px);
   font-size: clamp(26px, 4.4dvh, 40px);
 }
-.key.side { background: var(--lilac-soft); font-size: clamp(20px, 3.2dvh, 28px); }
+/* vw cap: German "Löschen" still fits its key on a 320px phone. */
+.key.side { background: var(--lilac-soft); font-size: min(clamp(20px, 3.2dvh, 28px), 5.4vw); padding-inline: 4px; }
 .check { height: clamp(56px, 8.5dvh, 80px); font-size: clamp(22px, 3.6dvh, 30px); }
 .check:disabled { background: var(--berry-soft); color: var(--ink-soft); box-shadow: 0 var(--press) 0 var(--ink-soft); border-color: var(--ink-soft); }
 
@@ -505,7 +510,9 @@ h1, h2, p { margin: 0; }
 .lang-pick:active { transform: translateY(calc(var(--press) - 2px)); box-shadow: 0 2px 0 var(--ink); }
 
 .mode-btn { height: 48px; white-space: nowrap; padding: 0 16px; border-radius: 999px; font-size: 22px; --press: 4px; color: var(--berry); }
-.mode-btn span { color: var(--ink-soft); font-size: 14px; }
+.mode-btn { display: inline-flex; align-items: center; gap: 6px; }
+.mode-btn .signs { display: flex; gap: .3em; }
+.mode-btn .caret { color: var(--ink-soft); font-size: 14px; }
 
 /* ---------- Mode picker ---------- */
 .mode-body { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: clamp(16px, 4dvh, 40px); padding-bottom: 8px; }
@@ -670,11 +677,14 @@ h1, h2, p { margin: 0; }
   .level { margin: 6px; padding: 8px 12px; }
   .levels.n6 .level { padding: 5px 10px; margin: 5px; }
   .levels.n6 .lv-name { font-size: 16px; }
-  /* Home has five things in its top bar; keep them all on screen. */
-  .topbar { gap: 6px; }
+  /* Home has six things in its top bar; keep them all on screen. */
+  .topbar { gap: 5px; }
   .topbar .icon-btn { width: 44px; height: 44px; font-size: 20px; }
   .topbar .lang-pick, .topbar .mode-btn { height: 44px; padding: 0 10px; }
   .mode-btn { font-size: 20px; }
+  /* The signs stack 2×2 and the ▾ goes, so "+ − × ÷" takes no more room than an icon. */
+  .mode-btn .signs { display: grid; grid-template-columns: repeat(2, auto); gap: 0 4px; font-size: 17px; line-height: 1.05; }
+  .mode-btn .caret { display: none; }
   .mode-title { font-size: clamp(20px, 6.6vw, 34px); }
   .mode-hero .bunny { width: 64px; }
   /* "Next ▶" in French or Spanish doesn't fit next to the dots: dots on their own row. */
@@ -718,9 +728,10 @@ h1, h2, p { margin: 0; }
   .sheet-foot .puffy { min-height: 48px; }
 }
 @media (orientation: portrait) and (max-width: 350px) {
+  .topbar { gap: 4px; }
   .topbar .icon-btn { width: 40px; height: 40px; font-size: 18px; }
   .topbar .lang-pick { height: 40px; padding: 0 8px; }
-  .topbar .mode-btn { height: 40px; padding: 0 8px; font-size: 18px; }
+  .topbar .mode-btn { height: 40px; padding: 0 8px; }
   .lang-pick > [aria-hidden]:first-child { display: none; } /* the globe; the language badge stays */
 }
 

@@ -31,18 +31,36 @@ function tone(freq: number, start: number, dur: number, type: OscillatorType = '
   osc.stop(t + dur + 0.05);
 }
 
+function setup(): AudioContext {
+  ctx ??= new AudioContext();
+  if (!night) {
+    night = ctx.createBiquadFilter();
+    night.type = 'lowpass';
+    night.frequency.value = 2200;
+    night.connect(ctx.destination);
+  }
+  return ctx;
+}
+
+/**
+ * Creates the audio context ahead of time (it starts paused until the first tap).
+ * Making one is slow on phones, and doing it inside the first tap made that tap lag.
+ */
+export function warmSound() {
+  if (!enabled) return;
+  try {
+    setup();
+  } catch {
+    // Audio not available: stay quiet.
+  }
+}
+
 function play(fn: () => void) {
   if (!enabled) return;
   try {
-    ctx ??= new AudioContext();
-    if (!night) {
-      night = ctx.createBiquadFilter();
-      night.type = 'lowpass';
-      night.frequency.value = 2200;
-      night.connect(ctx.destination);
-    }
+    const audio = setup();
     // iOS reports 'interrupted' after a call or a trip to the home screen, not only 'suspended'.
-    if (ctx.state !== 'running') void ctx.resume();
+    if (audio.state !== 'running') void audio.resume();
     fn();
   } catch {
     // Audio not available: stay quiet.
