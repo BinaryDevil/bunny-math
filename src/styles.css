@@ -401,12 +401,14 @@ h1, h2, p { margin: 0; }
 .area-rows { font-size: clamp(20px, 4vw, 28px); color: var(--ink); }
 .area-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; container-type: inline-size; }
 .area-top { align-self: center; font-size: clamp(20px, 4vw, 28px); color: var(--ink); }
-.area-top.ask { color: var(--ink-soft); }
+/* The unknown width (÷) is a yellow "?" tag, so it doesn't fade into the grid paper. */
+.area-top.ask { color: #4B2A5C; background: var(--butter); border: 2.5px solid var(--ink); border-radius: 999px; padding: 0 .55em; line-height: 1.3; }
 .area-top.answer { color: var(--berry); animation: pop .4s cubic-bezier(.3,1.6,.5,1); }
+/* "10" and "4" sit on tabs in their part's colour, as wide as the part, with dark text. */
 .area-labels { display: flex; gap: 6px; font-size: clamp(17px, 3.4vw, 24px); text-align: center; }
-.area-labels span { flex-basis: 0; min-width: 3.2em; }
-.area-labels .part-tens { color: var(--lilac); }
-.area-labels .part-ones { color: var(--mint); }
+.area-labels span { flex-basis: 0; min-width: 3.2em; line-height: 1.3; color: #4B2A5C; border: 2.5px solid var(--ink); border-radius: 8px; }
+.area-labels .part-tens { background: var(--lilac); }
+.area-labels .part-ones { background: var(--mint); }
 /* Square cells when there's room; wide boxes (6 × 49) get taller cells so each row is still easy to see. */
 .area-box {
   display: flex;
@@ -417,8 +419,10 @@ h1, h2, p { margin: 0; }
   position: relative; flex-basis: 0; min-width: 3.2em;
   display: grid; place-items: center;
   border: 2.5px solid var(--ink); border-radius: 6px;
+  /* Raised off the grid paper like the app's buttons. */
+  box-shadow: 0 4px 0 rgba(75,42,92,.3);
   background-color: var(--card);
-  background-image: linear-gradient(rgba(140,110,155,.35) 1px, transparent 1px), linear-gradient(90deg, rgba(140,110,155,.35) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(75,42,92,.3) 1px, transparent 1px), linear-gradient(90deg, rgba(75,42,92,.3) 1px, transparent 1px);
   background-size: calc(100% / var(--n)) calc(100% / var(--rows));
   background-position: -1px -1px;
 }
@@ -427,7 +431,13 @@ h1, h2, p { margin: 0; }
 .area-part.on.part-tens { background-color: var(--lilac); }
 .area-part.on.part-ones { background-color: var(--mint); }
 .area-part.on { animation: fill-in .4s ease-out; }
-.area-part.ghost { border-style: dashed; border-color: var(--ink-soft); background-image: none; background-color: transparent; }
+/* The part still to fill (÷): dashed and striped, but solid enough to stand out from the paper. */
+.area-part.ghost {
+  border-style: dashed; box-shadow: none;
+  background-color: var(--card);
+  background-image: repeating-linear-gradient(-45deg, var(--lilac-soft) 0 7px, transparent 7px 14px);
+  background-size: auto; background-position: 0 0;
+}
 .area-part b { font-size: clamp(20px, 4.4vw, 32px); line-height: 1.2; color: #4B2A5C; background: rgba(255,255,255,.75); padding: 0 .25em; border-radius: 8px; animation: pop .35s ease-out; }
 @keyframes fill-in { from { background-color: var(--card); } }
 
