@@ -5,7 +5,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const css = readFileSync(new URL('./styles.css', import.meta.url), 'utf8');
+// Normalise line endings so the regexes below also match a CRLF checkout (core.autocrlf on Windows).
+const css = readFileSync(new URL('./styles.css', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 /** The declarations of the first top-level rule whose selector is exactly `sel`. */
 function rule(sel: string): string {
   const esc = sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

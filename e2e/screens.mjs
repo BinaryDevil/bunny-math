@@ -8,6 +8,7 @@
 // 375x548 is an iPhone SE's real Safari viewport (screen minus the browser bars).
 //   E2E_LANGS=ja,de E2E_SIZES=320x568 node e2e/screens.mjs
 import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import * as pw from 'playwright';
@@ -31,7 +32,7 @@ mkdirSync(SHOTS, { recursive: true });
 
 let server;
 if (!process.env.E2E_URL) {
-  server = spawn(process.execPath, [new URL('../node_modules/vite/bin/vite.js', import.meta.url).pathname, 'preview', '--port', String(PORT), '--strictPort', '--host', '127.0.0.1'], { stdio: 'ignore' });
+  server = spawn(process.execPath, [fileURLToPath(new URL('../node_modules/vite/bin/vite.js', import.meta.url)), 'preview', '--port', String(PORT), '--strictPort', '--host', '127.0.0.1'], { stdio: 'ignore' });
   for (let i = 0; ; i++) {
     try { if ((await fetch(BASE)).ok) break; } catch {}
     if (i > 100) throw new Error('vite preview did not start (did you run `npm run build`?)');

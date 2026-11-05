@@ -6,6 +6,7 @@
 //   E2E_BROWSER=chromium node e2e/blocks.mjs
 //   E2E_SIZES=1024x640 E2E_CASES=15+27 E2E_SHOT=/tmp/x.png node e2e/blocks.mjs
 import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import * as pw from 'playwright';
 
 const ENGINE = process.env.E2E_BROWSER || 'webkit';
@@ -42,7 +43,7 @@ function parse(c) {
   return { a: +x, op, b: +y };
 }
 
-const server = spawn(process.execPath, [new URL('../node_modules/vite/bin/vite.js', import.meta.url).pathname, '--port', String(PORT), '--strictPort', '--host', '127.0.0.1'], { stdio: 'ignore' });
+const server = spawn(process.execPath, [fileURLToPath(new URL('../node_modules/vite/bin/vite.js', import.meta.url)), '--port', String(PORT), '--strictPort', '--host', '127.0.0.1'], { stdio: 'ignore' });
 for (let i = 0; ; i++) {
   try { if ((await fetch(BASE)).ok) break; } catch {}
   if (i > 150) throw new Error('vite did not start');
