@@ -36,7 +36,7 @@ There are no accounts. Progress is saved on the device. The only thing that ever
 
 **Show me how**
 - Explains each question step by step, in one of two styles (the choice is remembered):
-  - **Blocks**: hundreds, tens and ones blocks, and dot arrays for × and ÷
+  - **Pictures**: hundreds, tens and ones blocks for + and −; bunny hops on a number line for times tables and small ÷; a box split into tens and ones for bigger × and ÷
   - **Columns**: the written column method (竖式), one column at a time, with carried digits, borrow dots, and long division
 
 **9 languages**: English, 简体中文, 繁體中文, Français, Español, Deutsch, 日本語, 한국어, Português. The 🌐 button picks one; on the first visit it follows the browser's language.
