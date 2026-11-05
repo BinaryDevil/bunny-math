@@ -18,7 +18,8 @@ const SHOTS = process.env.E2E_SHOTS || '/tmp/shots';
 const PORT = Number(process.env.E2E_PORT || 4179);
 const BASE = process.env.E2E_URL || `http://127.0.0.1:${PORT}/`;
 const LANGS = ['en', 'zh-CN', 'zh-TW', 'fr', 'es', 'de', 'ja', 'ko', 'pt'];
-const SIZES = [[430, 932], [393, 852], [375, 667], [320, 568]];
+// 375x548 is an iPhone SE's Safari viewport; 1024x640 a small laptop or a tablet held sideways.
+const SIZES = [[430, 932], [393, 852], [375, 667], [375, 548], [320, 568], [1024, 640]];
 const MODES = ['plus', 'all'];
 const KEY = 'bunny-math:v1';
 
@@ -38,8 +39,9 @@ const browser = await pw[ENGINE].launch();
 const failures = [];
 const results = [];
 
-function saved(lang, mode) {
-  return JSON.stringify({ mode, lang, levelFor: { plus: 4, all: 13 }, explain: 'blocks', length: 10, sound: true, stickers: [], best: {} });
+// "+ −" starts on level 21, the youngest's (first of its 8 levels); with Adventure on, Home lists only the 6 that have it.
+function saved(lang, mode, adventure = false) {
+  return JSON.stringify({ mode, lang, levelFor: { plus: 21, all: 13 }, explain: 'blocks', length: 10, sound: true, stickers: [], best: {}, adventure });
 }
 
 async function newPage([width, height], state) {
@@ -78,6 +80,43 @@ function inspect() {
   for (const el of document.querySelectorAll('.home-body, .mode-body')) {
     if (el.scrollWidth > el.clientWidth + 1) out.problems.push(`content wider than ${el.className} (${el.scrollWidth} > ${el.clientWidth})`);
   }
+  // Mode and level cards: each one is what a tap at its centre hits, none overlap, none run off the side,
+  // and their words stay inside them.
+  const cards = [...document.querySelectorAll('.mode-card, .level')];
+  out.cards = cards.length;
+  cards.forEach((c, i) => {
+    c.scrollIntoView({ block: 'nearest' });
+    const r = c.getBoundingClientRect();
+    const name = c.textContent.trim().slice(0, 20);
+    if (r.left < 0 || r.right > innerWidth + 0.5) out.problems.push(`card off-screen sideways: ${name}`);
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    if (!hit || !c.contains(hit)) out.problems.push(`tap on card "${name}" hits ${hit ? hit.tagName + '.' + hit.className : 'nothing'}`);
+    if (r.height < 44 || r.width < 44) out.problems.push(`card "${name}" is only ${Math.round(r.width)}x${Math.round(r.height)}px`);
+    for (const d of cards.slice(i + 1)) {
+      const q = d.getBoundingClientRect();
+      if (r.left < q.right - 2 && r.right > q.left + 2 && r.top < q.bottom - 2 && r.bottom > q.top + 2) out.problems.push(`cards overlap: "${name}" and "${d.textContent.trim().slice(0, 20)}"`);
+    }
+    for (const t of c.querySelectorAll('.mode-name, .mode-blurb, .lv-name, .lv-eg')) {
+      const tr = t.getBoundingClientRect();
+      if (tr.right > r.right + 1 || tr.left < r.left - 1 || tr.bottom > r.bottom + 1 || t.scrollWidth > t.clientWidth + 1) out.problems.push(`text spills out of card "${name}"`);
+    }
+  });
+  // Level names, mode names and the Adventure switch wrap between words, never inside one ("Échauffeme / nt").
+  // A word may still break after a hyphen, and Chinese between any two characters.
+  const zh = document.documentElement.lang.startsWith('zh');
+  for (const el of document.querySelectorAll('.lv-name, .mode-name, .adv-switch b')) {
+    for (const node of el.childNodes) {
+      if (node.nodeType !== Node.TEXT_NODE) continue;
+      for (const m of node.data.matchAll(zh ? /[^\s\-\p{Script=Han}，。、]+/gu : /[^\s\-]+/g)) {
+        const range = document.createRange();
+        range.setStart(node, m.index);
+        range.setEnd(node, m.index + m[0].length);
+        const lines = new Set([...range.getClientRects()].filter((q) => q.width > 0).map((q) => Math.round(q.top)));
+        if (lines.size > 1) out.problems.push(`"${m[0]}" breaks mid-word in ${el.className || el.tagName.toLowerCase()}`);
+      }
+    }
+  }
+  for (const el of document.querySelectorAll('.home-body, .mode-body')) el.scrollTop = 0;
   const title = document.querySelector('.title, .mode-title');
   if (title) {
     const tr = title.getBoundingClientRect();
@@ -107,21 +146,26 @@ async function checkStart(page) {
 
 for (const size of SIZES) {
   for (const lang of LANGS) {
-    for (const mode of MODES) {
-      const page = await newPage(size, saved(lang, mode));
+    for (const [mode, adventure] of [...MODES.map((m) => [m, false]), ['plus', true]]) {
+      const screen = `home/${mode}${adventure ? '/adventure' : ''}`;
+      const page = await newPage(size, saved(lang, mode, adventure));
       const r = await page.evaluate(inspect);
-      if (mode === 'plus') await page.screenshot({ path: join(SHOTS, `home-${lang}-${size[0]}x${size[1]}.png`) });
+      if (mode === 'plus' && !adventure) await page.screenshot({ path: join(SHOTS, `home-${lang}-${size[0]}x${size[1]}.png`) });
       r.problems.push(...(await checkStart(page)));
       // Mode, language, code, print, stickers, sound.
       if (r.controls !== 6) r.problems.push(`expected 6 top-bar controls, found ${r.controls}`);
-      results.push({ screen: `home/${mode}`, lang, size: size.join('x'), ok: !r.problems.length, title: r.title });
-      if (r.problems.length) failures.push(`home/${mode} ${lang} ${size.join('x')}: ${r.problems.join('; ')}`);
+      // "+ −": 21, 22 and 1–6; Adventure leaves out 21–22. "All four": 11–14.
+      const want = mode === 'all' ? 4 : adventure ? 6 : 8;
+      if (r.cards !== want) r.problems.push(`expected ${want} level cards, found ${r.cards}`);
+      results.push({ screen, lang, size: size.join('x'), ok: !r.problems.length, title: r.title });
+      if (r.problems.length) failures.push(`${screen} ${lang} ${size.join('x')}: ${r.problems.join('; ')}`);
       await page.context().close();
     }
     // First visit: the mode screen, which also has the picker.
     const page = await newPage(size, JSON.stringify({ lang }));
     const r = await page.evaluate(inspect);
     if (r.controls !== 1) r.problems.push(`expected the language picker, found ${r.controls} controls`);
+    if (r.cards !== 2) r.problems.push(`expected 2 mode cards, found ${r.cards}`);
     await page.screenshot({ path: join(SHOTS, `mode-${lang}-${size[0]}x${size[1]}.png`) });
     results.push({ screen: 'mode', lang, size: size.join('x'), ok: !r.problems.length });
     if (r.problems.length) failures.push(`mode ${lang} ${size.join('x')}: ${r.problems.join('; ')}`);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
-import { generateQuiz } from '../lib/generator';
+import { generateQuiz, levelOf } from '../lib/generator';
 import { warmSound } from '../lib/sound';
 import type { LevelId, Question } from '../lib/types';
 import { AnswerPad, Prompt } from './Quiz';
@@ -24,7 +24,9 @@ export function Warmup({ level }: { level: LevelId }) {
     const go = () => {
       warmed = true;
       warmSound();
-      setQuestions(KINDS.map((k, i) => generateQuiz({ level, count: 1, seed: i + 1, kinds: [k], easeIn: false })[0]));
+      // Levels that only ask some kinds (21–22: plain sums) would give five of the same; level 1 has every kind.
+      const lvl = levelOf(level).kinds ? 1 : level;
+      setQuestions(KINDS.map((k, i) => generateQuiz({ level: lvl, count: 1, seed: i + 1, kinds: [k], easeIn: false })[0]));
     };
     // Safari has no requestIdleCallback.
     if ('requestIdleCallback' in window) {

@@ -8,6 +8,7 @@
  * Bump CODE_VERSION when the generator changes so old codes would give different questions,
  * so an old code is turned away instead of quietly making a different quiz.
  */
+import { hasAdventure } from './generator';
 import { LENGTHS } from './storage';
 import type { LevelId } from './types';
 
@@ -21,7 +22,8 @@ export const CODE_EMOJI = [
   '🎯', '🐶', '🐷', '🐮', '🐵', '🐔', '🦉', '🦖', '🐬', '🦀', '🐌', '🌍', '🌟', '🔔', '🧸', '🍦',
 ] as const;
 
-const LEVEL_IDS: LevelId[] = [1, 2, 3, 4, 5, 6, 11, 12, 13, 14];
+/** New levels go on the end, so every older code still means the same level. */
+const LEVEL_IDS: LevelId[] = [1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 21, 22];
 export const SEED_BITS = 20;
 export const MAX_DEPTH = 3;
 
@@ -70,7 +72,7 @@ export function decodeCode(text: string): ShareCode | null {
   const adventure = n % 2 === 1;
   const version = Math.floor(n / 2);
   if (version !== CODE_VERSION || level === undefined) return null;
-  if (adventure) return { adventure, level, depth: extra, seed };
+  if (adventure) return hasAdventure(level) ? { adventure, level, depth: extra, seed } : null;
   const length = LENGTHS[extra];
   return length === undefined ? null : { adventure, level, length, seed };
 }

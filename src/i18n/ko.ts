@@ -18,6 +18,10 @@ export const ko: Messages = {
   'mode.title': '무엇을 연습할까요?',
   'mode.aria': '연습할 것',
 
+  'level.21.name': '첫 계산',
+  'level.21.blurb': '10까지',
+  'level.22.name': '10 넘기',
+  'level.22.blurb': '18까지',
   'level.1.name': '준비 운동',
   'level.1.blurb': '20까지',
   'level.2.name': '큰 수 + 작은 수',

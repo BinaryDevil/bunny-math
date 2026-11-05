@@ -3,8 +3,11 @@ export type Op = '+' | '-' | '×' | '÷';
 /** Which operations the child practices: adding and taking away, or all four. */
 export type Mode = 'plus' | 'all';
 
-/** Levels 1–6 are in the "plus" mode, 11–14 in the "all four" mode. */
-export type LevelId = 1 | 2 | 3 | 4 | 5 | 6 | 11 | 12 | 13 | 14;
+/** The levels Adventure (and so the leaderboard) knows: 1–6 in the "plus" mode, 11–14 in "all four". */
+export type AdventureLevelId = 1 | 2 | 3 | 4 | 5 | 6 | 11 | 12 | 13 | 14;
+
+/** 21–22 are the youngest's levels, first in the "plus" mode (before 1). They have no Adventure. */
+export type LevelId = AdventureLevelId | 21 | 22;
 
 /** What a question practices. Used for the "how you did" summary. */
 export type Skill = 'add20' | 'sub20' | 'add' | 'sub' | 'carry' | 'borrow' | 'times' | 'divide';

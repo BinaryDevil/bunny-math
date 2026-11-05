@@ -8,7 +8,7 @@
  * showdowns and rest stops. Two kids playing the same code who pick the same paths get exactly
  * the same questions, whatever treats they pick or use.
  */
-import { CARROTS, LEVEL_TIER, MAX_HEARTS, MAX_RASCAL_HEARTS, MEADOWS, QUESTIONS_PER_MEADOW, START_HEARTS, worth } from './carrots';
+import { CARROTS, MAX_HEARTS, MAX_RASCAL_HEARTS, MEADOWS, QUESTIONS_PER_MEADOW, START_HEARTS, tierOfLevel, worth } from './carrots';
 import { generateQuiz, nextLevel } from './generator';
 import { makeRng } from './rng';
 import type { Kind, LevelId, Question, Skill } from './types';
@@ -190,8 +190,8 @@ function afterRest(run: Run, meadow: number): Run {
 
 /* ---------- Carrots ---------- */
 
-const baseWorth = (run: Pick<Run, 'level'>) => worth(LEVEL_TIER[run.level]);
-const questionWorth = (q: Question, level: LevelId) => worth(q.tier ?? LEVEL_TIER[level], q.hard);
+const baseWorth = (run: Pick<Run, 'level'>) => worth(tierOfLevel(run.level));
+const questionWorth = (q: Question, level: LevelId) => worth(q.tier ?? tierOfLevel(level), q.hard);
 
 /** What answering the current question this way would do. The screen shows it before moving on. */
 export type Gain = {
@@ -277,7 +277,7 @@ export function answer(run: Run, outcome: Outcome): Run {
 /** The bonus for a meadow with no hearts lost. */
 export function perfectBonus(run: Run, meadow: number, path: Path): number {
   const spec = meadowSpec(run.level, meadow, path);
-  return CARROTS.perfectMeadow(worth(LEVEL_TIER[spec.level], spec.hard));
+  return CARROTS.perfectMeadow(worth(tierOfLevel(spec.level), spec.hard));
 }
 
 /**

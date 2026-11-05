@@ -25,6 +25,10 @@ export const en = {
   'mode.aria': 'What to practice',
 
   // Levels
+  'level.21.name': 'First sums',
+  'level.21.blurb': 'Up to 10',
+  'level.22.name': 'Past 10',
+  'level.22.blurb': 'Up to 18',
   'level.1.name': 'Warm-up',
   'level.1.blurb': 'Within 20',
   'level.2.name': 'Big + small',

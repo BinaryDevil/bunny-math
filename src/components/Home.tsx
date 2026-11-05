@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { tn, useT, type Lang } from '../i18n';
 import { levelRate } from '../lib/carrots';
 import type { ShareCode } from '../lib/codes';
-import { levelsFor, MODES } from '../lib/generator';
+import { hasAdventure, levelsFor, MODES } from '../lib/generator';
 import { fetchBoard, leaderboardOn, type Entry } from '../lib/leaderboard';
 import { sounds } from '../lib/sound';
 import { LENGTHS, type Saved } from '../lib/storage';
@@ -59,11 +59,46 @@ export function SoundButton({ on, onToggle }: { on: boolean; onToggle: () => voi
   );
 }
 
+/**
+ * Sets `--lv-word` on the level grid: the widest word in its level names, in em. The CSS caps a
+ * name's font size so that word fits on one line of its card (see .lv-name), so a long word like
+ * "Échauffement" gets a slightly smaller font instead of breaking in the middle. Words may still
+ * break after a hyphen, and Chinese between any two characters.
+ */
+function fitLevelNames(grid: HTMLElement, lang: Lang) {
+  let widest = 0;
+  for (const name of grid.querySelectorAll<HTMLElement>('.lv-name')) {
+    const size = parseFloat(getComputedStyle(name).fontSize);
+    if (!size) continue;
+    let words = name.textContent!.split(/\s+|(?<=-)/);
+    if (lang.startsWith('zh')) words = words.flatMap((w) => w.split(/(?<=\p{Script=Han})|(?=\p{Script=Han})/u));
+    for (const w of words.filter(Boolean)) {
+      const probe = document.createElement('span');
+      probe.style.cssText = 'position:absolute;white-space:nowrap;visibility:hidden';
+      probe.textContent = w;
+      name.appendChild(probe);
+      widest = Math.max(widest, probe.getBoundingClientRect().width / size);
+      probe.remove();
+    }
+  }
+  // 2% to spare, so rounding never tips a word that just fits onto two lines.
+  if (widest > 0) grid.style.setProperty('--lv-word', (widest * 1.02).toFixed(3));
+}
+
 export function Home({ saved, mode, level, lang, onLang, onLevel, onMode, onChange, onStart, onStickers, onPrint, onBoard, onCode, pendingCode, onCodeClosed }: Props) {
   const t = useT();
-  const levels = levelsFor(mode);
   const adv = saved.adventure;
+  // Levels 21–22 (the youngest's) have no Adventure, so it doesn't list them.
+  const levels = levelsFor(mode).filter((l) => !adv || hasAdventure(l.id));
   const [morph, setMorph] = useState(false);
+  const grid = useRef<HTMLDivElement>(null);
+  const names = levels.map((l) => t(`level.${l.id}.name`)).join('|');
+  useLayoutEffect(() => {
+    const fit = () => grid.current && fitLevelNames(grid.current, lang);
+    fit();
+    // Measured again once the web fonts are in: the fallback font's words are a different width.
+    document.fonts?.ready.then(fit);
+  }, [names, lang]);
   const [coding, setCoding] = useState(!!pendingCode);
   const [me, setMe] = useState<Entry | null | undefined>(undefined);
   useEffect(() => {
@@ -125,7 +160,7 @@ export function Home({ saved, mode, level, lang, onLang, onLevel, onMode, onChan
           </div>
         </div>
         <div class="home-pick">
-          <div class={`levels n${levels.length}`} role="radiogroup" aria-label={t('home.level')}>
+          <div ref={grid} class={`levels n${levels.length}`} role="radiogroup" aria-label={t('home.level')}>
             {levels.map((l) => (
               <button key={l.id} class="level" role="radio" aria-checked={level === l.id}
                 onClick={() => {

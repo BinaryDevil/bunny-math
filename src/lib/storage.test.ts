@@ -21,6 +21,13 @@ describe('loading a save', () => {
     expect(load()).toEqual(good);
   });
 
+  it('keeps the youngest levels (21–22) in "+ −", with their stars, and only there', () => {
+    expect(clean({ mode: 'plus', levelFor: { plus: 21, all: 12 }, best: { 21: 3, 22: 1 } })).toMatchObject({ mode: 'plus', levelFor: { plus: 21, all: 12 }, best: { 21: 3, 22: 1 } });
+    expect(clean({ levelFor: { plus: 22, all: 21 } }).levelFor).toEqual({ plus: 22, all: 11 });
+    // Still only two modes.
+    expect(clean({ mode: 'easy' }).mode).toBeUndefined();
+  });
+
   it('moves the single level from saves made before modes existed', () => {
     expect(clean({ level: 3 }).levelFor).toEqual({ plus: 3, all: 11 });
   });

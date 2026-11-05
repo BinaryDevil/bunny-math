@@ -14,6 +14,10 @@ export const de: Messages = {
   'mode.title': 'Was wollen wir üben?',
   'mode.aria': 'Was du üben möchtest',
 
+  'level.21.name': 'Erste Aufgaben',
+  'level.21.blurb': 'Bis 10',
+  'level.22.name': 'Über 10',
+  'level.22.blurb': 'Bis 18',
   'level.1.name': 'Aufwärmen',
   'level.1.blurb': 'Bis 20',
   'level.2.name': 'Groß + klein',

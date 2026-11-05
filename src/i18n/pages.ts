@@ -6,6 +6,10 @@
 import type { Lang } from './index';
 
 const en = {
+  'page.lv.21': 'Addition and subtraction within 10',
+  'page.lv.21.desc': 'Adding and taking away one-digit numbers with answers up to 10, like 3 + 4 and 7 − 2. A first step for the youngest.',
+  'page.lv.22': 'Addition past 10 and subtraction within 10',
+  'page.lv.22.desc': 'Adding one-digit numbers past 10 and taking away within 9, like 8 + 5 and 9 − 3.',
   'page.lv.1': 'Addition and subtraction within 20',
   'page.lv.1.desc': 'Adding and taking away with numbers up to 20, like 7 + 8 and 15 − 9.',
   'page.lv.2': 'Addition and subtraction without carrying',
@@ -47,6 +51,10 @@ export type PageMessages = Record<keyof typeof en, string>;
 export type PageKey = keyof PageMessages;
 
 const zhCN: PageMessages = {
+  'page.lv.21': '10以内加减法',
+  'page.lv.21.desc': '一位数的加法和减法，得数不超过10，比如 3 + 4 和 7 − 2。适合刚开始学的小朋友。',
+  'page.lv.22': '进位加法和10以内减法',
+  'page.lv.22.desc': '两个一位数相加超过10，以及一位数减法，比如 8 + 5 和 9 − 3。',
   'page.lv.1': '20以内加减法',
   'page.lv.1.desc': '20以内的加法和减法，比如 7 + 8 和 15 − 9。',
   'page.lv.2': '不进位不退位加减法',
@@ -85,6 +93,10 @@ const zhCN: PageMessages = {
 };
 
 const zhTW: PageMessages = {
+  'page.lv.21': '10以內加減法',
+  'page.lv.21.desc': '一位數的加法和減法，得數不超過10，例如 3 + 4 和 7 − 2。適合剛開始學的小朋友。',
+  'page.lv.22': '進位加法和10以內減法',
+  'page.lv.22.desc': '兩個一位數相加超過10，以及一位數減法，例如 8 + 5 和 9 − 3。',
   'page.lv.1': '20以內加減法',
   'page.lv.1.desc': '20以內的加法和減法，例如 7 + 8 和 15 − 9。',
   'page.lv.2': '不進位不借位加減法',
@@ -123,6 +135,10 @@ const zhTW: PageMessages = {
 };
 
 const fr: PageMessages = {
+  'page.lv.21': 'Additions et soustractions jusqu’à 10',
+  'page.lv.21.desc': 'Additionner et soustraire des nombres à un chiffre, avec des résultats jusqu’à 10, comme 3 + 4 et 7 − 2. Un premier pas pour les plus petits.',
+  'page.lv.22': 'Additions au-delà de 10 et soustractions jusqu’à 10',
+  'page.lv.22.desc': 'Additionner deux nombres à un chiffre au-delà de 10, et soustraire sous 10, comme 8 + 5 et 9 − 3.',
   'page.lv.1': 'Additions et soustractions jusqu’à 20',
   'page.lv.1.desc': 'Additionner et soustraire avec des nombres jusqu’à 20, comme 7 + 8 et 15 − 9.',
   'page.lv.2': 'Additions et soustractions sans retenue',
@@ -161,6 +177,10 @@ const fr: PageMessages = {
 };
 
 const es: PageMessages = {
+  'page.lv.21': 'Sumas y restas hasta 10',
+  'page.lv.21.desc': 'Sumar y restar números de una cifra con resultados hasta 10, como 3 + 4 y 7 − 2. Un primer paso para los más pequeños.',
+  'page.lv.22': 'Sumas que pasan de 10 y restas hasta 10',
+  'page.lv.22.desc': 'Sumar números de una cifra que pasan de 10 y restar por debajo de 10, como 8 + 5 y 9 − 3.',
   'page.lv.1': 'Sumas y restas hasta 20',
   'page.lv.1.desc': 'Sumar y restar con números hasta 20, como 7 + 8 y 15 − 9.',
   'page.lv.2': 'Sumas y restas sin llevar',
@@ -199,6 +219,10 @@ const es: PageMessages = {
 };
 
 const de: PageMessages = {
+  'page.lv.21': 'Plus und Minus bis 10',
+  'page.lv.21.desc': 'Plus- und Minusaufgaben mit einstelligen Zahlen und Ergebnissen bis 10, wie 3 + 4 und 7 − 2. Ein erster Schritt für die Kleinsten.',
+  'page.lv.22': 'Plus mit Zehnerübergang und Minus bis 10',
+  'page.lv.22.desc': 'Zwei einstellige Zahlen plus über die 10 und Minus unter 10, wie 8 + 5 und 9 − 3.',
   'page.lv.1': 'Plus und Minus bis 20',
   'page.lv.1.desc': 'Plus- und Minusaufgaben mit Zahlen bis 20, wie 7 + 8 und 15 − 9.',
   'page.lv.2': 'Plus und Minus ohne Zehnerübergang',
@@ -237,6 +261,10 @@ const de: PageMessages = {
 };
 
 const ja: PageMessages = {
+  'page.lv.21': '10までのたし算・ひき算',
+  'page.lv.21.desc': '1けたの数の、こたえが10までのたし算とひき算です。例：3 + 4、7 − 2。はじめての けいさんに。',
+  'page.lv.22': 'くり上がりのたし算と10までのひき算',
+  'page.lv.22.desc': '1けたの数の、10をこえるたし算と10までのひき算です。例：8 + 5、9 − 3。',
   'page.lv.1': '20までのたし算・ひき算',
   'page.lv.1.desc': '20までの数のたし算とひき算です。例：7 + 8、15 − 9。',
   'page.lv.2': 'くり上がり・くり下がりのないたし算・ひき算',
@@ -275,6 +303,10 @@ const ja: PageMessages = {
 };
 
 const ko: PageMessages = {
+  'page.lv.21': '10까지의 덧셈과 뺄셈',
+  'page.lv.21.desc': '한 자리 수로 하는, 답이 10까지인 덧셈과 뺄셈이에요. 예: 3 + 4, 7 − 2. 처음 배우는 아이들에게 좋아요.',
+  'page.lv.22': '받아올림 덧셈과 10까지의 뺄셈',
+  'page.lv.22.desc': '한 자리 수끼리 더해서 10을 넘는 덧셈과 한 자리 수 뺄셈이에요. 예: 8 + 5, 9 − 3.',
   'page.lv.1': '20까지의 덧셈과 뺄셈',
   'page.lv.1.desc': '20까지의 수로 하는 덧셈과 뺄셈이에요. 예: 7 + 8, 15 − 9.',
   'page.lv.2': '받아올림·받아내림 없는 덧셈과 뺄셈',
@@ -313,6 +345,10 @@ const ko: PageMessages = {
 };
 
 const pt: PageMessages = {
+  'page.lv.21': 'Adição e subtração até 10',
+  'page.lv.21.desc': 'Somar e subtrair números de um algarismo com resultados até 10, como 3 + 4 e 7 − 2. Um primeiro passo para os mais pequenos.',
+  'page.lv.22': 'Adição além de 10 e subtração até 10',
+  'page.lv.22.desc': 'Somar números de um algarismo que passam de 10 e subtrair abaixo de 10, como 8 + 5 e 9 − 3.',
   'page.lv.1': 'Adição e subtração até 20',
   'page.lv.1.desc': 'Somar e subtrair com números até 20, como 7 + 8 e 15 − 9.',
   'page.lv.2': 'Adição e subtração sem reagrupamento',

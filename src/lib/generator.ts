@@ -1,9 +1,13 @@
-import { LEVEL_TIER, type Tier } from './carrots';
+import { tierOfLevel, type Tier } from './carrots';
 import { makeRng, type Rng } from './rng';
 import type { Answer, CompareSign, Fact, Kind, LevelId, Mode, Op, Question, Skill, Story } from './types';
 
-/** Level names and blurbs are translated: `level.<id>.name` and `level.<id>.blurb`. */
-export type Level = { id: LevelId; mode: Mode; example: string };
+/**
+ * Level names and blurbs are translated: `level.<id>.name` and `level.<id>.blurb`.
+ * - `kinds`: the only question formats the level asks (unset: all of them).
+ * - `adventure: false`: the level has no Adventure (so no carrots and no leaderboard).
+ */
+export type Level = { id: LevelId; mode: Mode; example: string; kinds?: readonly Kind[]; adventure?: false };
 
 /** Mode names and blurbs are translated: `mode.<mode>.name` and `mode.<mode>.blurb`. */
 export const MODES: Record<Mode, { signs: string }> = {
@@ -11,7 +15,12 @@ export const MODES: Record<Mode, { signs: string }> = {
   all: { signs: '+ − × ÷' },
 };
 
+/** Each mode's levels, easiest first. */
 export const LEVELS: readonly Level[] = [
+  // For the youngest: plain "3 + 4 = ?" and "7 − 2 = ?" with one-digit numbers. No missing numbers,
+  // compare or stories, and no Adventure (Rascal, hearts and carrots are for the older levels).
+  { id: 21, mode: 'plus', example: '3 + 4', kinds: ['type'], adventure: false },
+  { id: 22, mode: 'plus', example: '8 + 5', kinds: ['type'], adventure: false },
   { id: 1, mode: 'plus', example: '7 + 8' },
   { id: 2, mode: 'plus', example: '34 + 5' },
   { id: 3, mode: 'plus', example: '38 + 7' },
@@ -24,7 +33,9 @@ export const LEVELS: readonly Level[] = [
   { id: 14, mode: 'all', example: '23 × 4' },
 ];
 
-export const levelOf = (id: LevelId) => LEVELS.find((l) => l.id === id) ?? LEVELS[0];
+export const levelOf = (id: LevelId) => LEVELS.find((l) => l.id === id) ?? LEVELS.find((l) => l.id === 1)!;
+/** Whether a level can be played as an Adventure. */
+export const hasAdventure = (id: LevelId) => levelOf(id).adventure !== false;
 export const levelsFor = (mode: Mode) => LEVELS.filter((l) => l.mode === mode);
 export function nextLevel(id: LevelId): LevelId | null {
   const list = levelsFor(levelOf(id).mode);
@@ -74,7 +85,7 @@ export const regroups = (f: Fact) => regroupCount(f) > 0;
 export function skillOf(f: Fact, level: LevelId): Skill {
   if (f.op === '×') return 'times';
   if (f.op === '÷') return 'divide';
-  if (level === 1 || level === 11) return f.op === '+' ? 'add20' : 'sub20';
+  if (level === 1 || level === 11 || level === 21 || level === 22) return f.op === '+' ? 'add20' : 'sub20';
   if (regroups(f)) return f.op === '+' ? 'carry' : 'borrow';
   return f.op === '+' ? 'add' : 'sub';
 }
@@ -82,6 +93,29 @@ export function skillOf(f: Fact, level: LevelId): Skill {
 /* ---------- One sum per level ---------- */
 
 type PM = '+' | '-';
+
+/**
+ * One-digit sums for the youngest: a and b from 1 to 9, and taking away never goes below zero.
+ * Level 21 answers up to 10 (3 + 4, 9 + 1, 7 − 2); level 22 adds past 10 (8 + 5) and takes away
+ * from the bigger one-digit numbers (9 − 3). Picked evenly from every sum in the range.
+ */
+const pairs = (keep: (a: number, b: number) => boolean) =>
+  Array.from({ length: 81 }, (_, i) => [1 + Math.floor(i / 9), 1 + (i % 9)]).filter(([a, b]) => keep(a, b));
+const ADD_TO_10 = pairs((a, b) => a + b <= 10);
+const ADD_PAST_10 = pairs((a, b) => a + b > 10);
+const TAKE_ALL = pairs((a, b) => b <= a);
+const TAKE_BIG = pairs((a, b) => a >= 6 && b >= 2 && b <= a);
+
+const oneDigit =
+  (adds: number[][], takes: number[][]): Gen =>
+  (r, op) => {
+    if (op === '-' || op === '÷') {
+      const [a, b] = r.pick(takes);
+      return sub(a, b);
+    }
+    const [a, b] = r.pick(adds);
+    return add(a, b);
+  };
 
 function level1(r: Rng, op: PM): Fact {
   const style = r.pick(['cross', 'cross', 'small', 'teen'] as const);
@@ -221,6 +255,8 @@ const plusOnly =
     pm(r, op === '-' || op === '÷' ? '-' : '+');
 
 const BY_LEVEL: Record<LevelId, Gen> = {
+  21: oneDigit(ADD_TO_10, TAKE_ALL),
+  22: oneDigit(ADD_PAST_10, TAKE_BIG),
   1: plusOnly(level1),
   2: plusOnly(level2),
   3: plusOnly(level3),
@@ -256,9 +292,9 @@ export function toughness(f: Fact): number {
 export function tierOf(level: LevelId, op: Op): Tier {
   if (op === '+' || op === '-') {
     const pm: Partial<Record<LevelId, Tier>> = { 11: 1, 12: 3, 13: 4, 14: 5 };
-    return pm[level] ?? LEVEL_TIER[level];
+    return pm[level] ?? tierOfLevel(level);
   }
-  return LEVEL_TIER[level];
+  return tierOfLevel(level);
 }
 
 /* ---------- Question formats ---------- */
@@ -392,6 +428,8 @@ export function generateQuiz({ level, count, seed, skills, kinds, hard = false, 
   const out: Question[] = [];
   // Spread the operations evenly, in a shuffled order.
   const pattern = opsFor(level);
+  // Some levels only ask some formats (21–22: plain sums only), whatever was asked for.
+  const only = levelOf(level).kinds;
   const ops = r.shuffle(Array.from({ length: count }, (_, i) => pattern[i % pattern.length]));
 
   for (let i = 0; i < count; i++) {
@@ -406,6 +444,7 @@ export function generateQuiz({ level, count, seed, skills, kinds, hard = false, 
     // Ease in: the first two questions are always plain sums.
     let kind = i < 2 && easeIn ? 'type' : pickKind(r);
     if (kinds && !kinds.includes(kind)) kind = r.pick(kinds);
+    if (only && !only.includes(kind)) kind = only[0];
     const q = makeQuestion(r, `q${i + 1}`, fact, skillOf(fact, level), kind);
     q.tier = tierOf(level, fact.op);
     if (hard) q.hard = true;

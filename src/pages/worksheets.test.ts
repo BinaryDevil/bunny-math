@@ -76,7 +76,8 @@ describe('worksheet pages', () => {
     const d = doc('zh-cn/worksheets/times-tables-up-to-10/index.html');
     expect(d.querySelector('link[rel=css]')!.getAttribute('href')).toBe('../../../assets/index-abc.css');
     expect(d.querySelector('.brand')!.getAttribute('href')).toBe('../../../');
-    expect(d.querySelector('.lv-list a')!.getAttribute('href')).toBe('../../../zh-cn/worksheets/addition-subtraction-within-20/');
+    // The youngest's level comes first.
+    expect(d.querySelector('.lv-list a')!.getAttribute('href')).toBe('../../../zh-cn/worksheets/addition-subtraction-within-10/');
     expect(doc('worksheets/index.html').querySelector('link[rel=css]')!.getAttribute('href')).toBe('../assets/index-abc.css');
   });
 
@@ -86,6 +87,16 @@ describe('worksheet pages', () => {
     expect(play.pathname).toBe('/');
     expect(play.searchParams.get('lang')).toBe('fr');
     expect(decodeCode(play.searchParams.get('code')!)).toMatchObject({ adventure: false, level: 11, length: QUESTIONS });
+  });
+
+  it('prints only plain one-digit sums for levels 21–22, for ages 4–6', () => {
+    for (const slug of ['addition-subtraction-within-10', 'addition-past-10-subtraction-within-10']) {
+      const d = doc(`ja/worksheets/${slug}/index.html`);
+      for (const q of d.querySelectorAll('.ws-q > span:last-child')) expect(q.textContent!.trim()).toMatch(/^[1-9] [+−] [1-9] =$/);
+      expect(d.querySelectorAll('.ws-q .story, .ws-q .circle')).toHaveLength(0);
+      expect(byPath.get(`ja/worksheets/${slug}/index.html`)).toContain('"typicalAgeRange":"4-6"');
+    }
+    expect(byPath.get('worksheets/times-tables-2-5-10/index.html')).toContain('"typicalAgeRange":"6-9"');
   });
 
   it('shows the same questions on every build', () => {

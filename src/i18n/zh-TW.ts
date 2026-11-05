@@ -14,6 +14,10 @@ export const zhTW: Messages = {
   'mode.title': '我們來練習什麼？',
   'mode.aria': '選擇練習內容',
 
+  'level.21.name': '小小加減',
+  'level.21.blurb': '10以內',
+  'level.22.name': '超過10',
+  'level.22.blurb': '18以內',
   'level.1.name': '暖身',
   'level.1.blurb': '20以內',
   'level.2.name': '大數加小數',

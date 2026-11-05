@@ -15,6 +15,10 @@ export const fr: Messages = {
   'mode.title': 'On s’entraîne à quoi ?',
   'mode.aria': 'Ce qu’on travaille',
 
+  'level.21.name': 'Premiers calculs',
+  'level.21.blurb': 'Jusqu’à 10',
+  'level.22.name': 'Plus de 10',
+  'level.22.blurb': 'Jusqu’à 18',
   'level.1.name': 'Échauffement',
   'level.1.blurb': 'Jusqu’à 20',
   'level.2.name': 'Grand + petit',

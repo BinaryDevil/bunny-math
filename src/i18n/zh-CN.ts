@@ -14,6 +14,10 @@ export const zhCN: Messages = {
   'mode.title': '我们来练什么？',
   'mode.aria': '选择练习内容',
 
+  'level.21.name': '小小加减',
+  'level.21.blurb': '10以内',
+  'level.22.name': '超过10',
+  'level.22.blurb': '18以内',
   'level.1.name': '热身',
   'level.1.blurb': '20以内',
   'level.2.name': '大数加小数',

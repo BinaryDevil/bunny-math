@@ -14,7 +14,7 @@
 import { activate, format, getLang, LANGS, t, type Lang, type MessageKey, type Params } from '../i18n';
 import { PAGE_MESSAGES, type PageKey } from '../i18n/pages';
 import { encodeCode } from '../lib/codes';
-import { LEVELS, opSymbol } from '../lib/generator';
+import { levelOf, LEVELS, opSymbol } from '../lib/generator';
 import type { LevelId, Mode, Question } from '../lib/types';
 import { keyAnswer, makeSheets } from '../lib/worksheet';
 
@@ -33,6 +33,8 @@ export const SLUGS: Record<LevelId, string> = {
   12: 'times-tables-up-to-5',
   13: 'times-tables-up-to-10',
   14: 'multiplication-division-2-digit-by-1-digit',
+  21: 'addition-subtraction-within-10',
+  22: 'addition-past-10-subtraction-within-10',
 };
 
 export type Page = { path: string; html: string };
@@ -203,7 +205,8 @@ ${levelCards(lang, root, level)}
       description: plain(desc),
       learningResourceType: 'Worksheet',
       educationalUse: 'Practice',
-      typicalAgeRange: '6-9',
+      // The plain-sums-only levels (21–22) are for the youngest.
+      typicalAgeRange: levelOf(level).kinds ? '4-6' : '6-9',
       isAccessibleForFree: true,
       inLanguage: lang,
       url: `${SITE}/${dir}`,

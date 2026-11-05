@@ -10,7 +10,7 @@ import { Stickers } from './components/Stickers';
 import { Worksheet } from './components/Worksheet';
 import { activate, browserLangs, detectLang, isLang, LangContext, t, type Lang } from './i18n';
 import { codeFromUrl, encodeCode, shareSeed, type ShareCode } from './lib/codes';
-import { generateQuiz, nextLevel } from './lib/generator';
+import { generateQuiz, hasAdventure, levelsFor, nextLevel } from './lib/generator';
 import { flush, submitRun } from './lib/leaderboard';
 import { randomSeed } from './lib/rng';
 import { depthFor, type Run } from './lib/run';
@@ -56,6 +56,9 @@ export function App() {
   activate(lang);
   const mode: Mode = saved.mode ?? 'plus';
   const level = saved.levelFor[mode];
+  // Levels 21–22 (the youngest's) have no Adventure: in Adventure, Home offers the mode's other
+  // levels, and a saved 21–22 starts from the first of them. The saved level stays as it was.
+  const advLevel = hasAdventure(level) ? level : levelsFor(mode).find((l) => hasAdventure(l.id))!.id;
 
   useEffect(() => {
     save(saved);
@@ -99,7 +102,7 @@ export function App() {
   }
 
   function startAdventure(opts: { level?: LevelId; seed?: number; depth?: number; fromCode?: boolean } = {}) {
-    const lvl = opts.level ?? level;
+    const lvl = opts.level ?? advLevel;
     const seed = opts.seed ?? shareSeed();
     const depth = opts.depth ?? depthFor(saved.adv.runsPlayed, saved.adv.wins);
     const code = encodeCode({ adventure: true, level: lvl, depth, seed });
@@ -162,7 +165,7 @@ export function App() {
           <Home
             saved={saved}
             mode={mode}
-            level={level}
+            level={saved.adventure ? advLevel : level}
             lang={lang}
             onLang={(l) => update({ lang: l })}
             onLevel={setLevel}

@@ -22,12 +22,23 @@ describe('share codes', () => {
   });
 
   it('round-trips every level and quiz length', () => {
-    for (const level of [1, 2, 3, 4, 5, 6, 11, 12, 13, 14] as const) {
+    for (const level of [1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 21, 22] as const) {
       for (const length of LENGTHS) {
         const c: ShareCode = { adventure: false, level, length, seed: 777 };
         expect(decodeCode(encodeCode(c))).toEqual(c);
       }
     }
+  });
+
+  it('keeps the codes made before levels 21–22 existed', () => {
+    // Made by the app before the new levels went on the end of the level list.
+    expect(encodeCode(cases[0])).toBe('🐸🍓🍓🍓🍓');
+    expect(encodeCode(cases[1])).toBe('🐝🍒🍦🍦🍦');
+    expect(encodeCode(cases[2])).toBe('🦁🍋🍇🐢🍓');
+  });
+
+  it('has no Adventure codes for levels 21–22, which have no Adventure', () => {
+    for (const level of [21, 22] as const) expect(decodeCode(encodeCode({ adventure: true, level, depth: 0, seed: 9 }))).toBeNull();
   });
 
   it('ignores spaces and emoji variation selectors', () => {

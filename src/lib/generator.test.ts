@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { correctAnswer, generateQuiz, LEVELS, makeChoices, makeFact, nextLevel, regroupCount, regroups } from './generator';
+import { correctAnswer, generateQuiz, hasAdventure, levelOf, LEVELS, levelsFor, makeChoices, makeFact, MODES, nextLevel, regroupCount, regroups } from './generator';
+import { makeSheets } from './worksheet';
 import { makeRng } from './rng';
 import type { LevelId, Op } from './types';
 
@@ -73,15 +74,17 @@ describe('bigger numbers, times and divide', () => {
         const want = { '+': f.a + f.b, '-': f.a - f.b, '×': f.a * f.b, '÷': f.a / f.b }[f.op];
         expect(f.c).toBe(want);
         expect(Number.isInteger(f.c)).toBe(true);
-        expect(f.c).toBeGreaterThanOrEqual(1);
+        // The youngest's levels (21–22) may take away 1 and make 0 (5 − 5); the others never do.
+        const young = level === 21 || level === 22;
+        expect(f.c).toBeGreaterThanOrEqual(young ? 0 : 1);
         expect(f.c).toBeLessThanOrEqual(999);
-        expect(f.b).toBeGreaterThanOrEqual(2);
+        expect(f.b).toBeGreaterThanOrEqual(young ? 1 : 2);
       }
     }
   });
 
   it('add & take-away levels never times or divide', () => {
-    for (const level of [1, 2, 3, 4, 5, 6] as const) {
+    for (const level of [21, 22, 1, 2, 3, 4, 5, 6] as const) {
       for (const f of facts(level, ['×', '÷'])) expect(['+', '-']).toContain(f.op);
     }
   });
@@ -132,10 +135,76 @@ describe('bigger numbers, times and divide', () => {
   });
 
   it('the next level stays in the same mode', () => {
+    expect(nextLevel(22)).toBe(1);
     expect(nextLevel(4)).toBe(5);
     expect(nextLevel(6)).toBe(null);
     expect(nextLevel(13)).toBe(14);
     expect(nextLevel(14)).toBe(null);
+  });
+});
+
+describe('levels 21–22: one-digit sums for the youngest, first in "+ −"', () => {
+  const YOUNG = [21, 22] as const;
+  const ALL_KINDS = ['type', 'choice', 'missing', 'story', 'compare'] as const;
+  const quizzes = (level: (typeof YOUNG)[number]) =>
+    SEEDS.slice(0, 60).flatMap((seed) => [
+      ...generateQuiz({ level, count: 20, seed }),
+      ...generateQuiz({ level, count: 10, seed, skills: ['add20'] }),
+      ...generateQuiz({ level, count: 10, seed, skills: ['sub20'] }),
+      // Asking for other formats (as Warmup and the printed sheets do) still gets plain sums.
+      ...ALL_KINDS.flatMap((k) => generateQuiz({ level, count: 3, seed, kinds: [k], easeIn: false })),
+      ...makeSheets(level, 20, 3, seed).flat(),
+    ]);
+
+  it('are the first levels of "+ −", in no other mode, and have no Adventure', () => {
+    expect(Object.keys(MODES)).toEqual(['plus', 'all']);
+    expect(levelsFor('plus').map((l) => l.id)).toEqual([21, 22, 1, 2, 3, 4, 5, 6]);
+    expect(levelsFor('all').map((l) => l.id)).toEqual([11, 12, 13, 14]);
+    expect(YOUNG.map(hasAdventure)).toEqual([false, false]);
+    expect(LEVELS.filter((l) => !YOUNG.includes(l.id as 21)).every((l) => hasAdventure(l.id))).toBe(true);
+    expect([nextLevel(21), nextLevel(22)]).toEqual([22, 1]);
+    // An unknown level still falls back to level 1, as before.
+    expect(levelOf(99 as 1).id).toBe(1);
+  });
+
+  it.each(YOUNG)('level %i only asks plain "a + b = ?" and "a − b = ?" with a and b from 1 to 9, never below zero, never missing numbers, stories, choices or compare', (level) => {
+    for (const q of quizzes(level)) {
+      expect(q.kind).toBe('type');
+      expect(['+', '-']).toContain(q.fact.op);
+      for (const n of [q.fact.a, q.fact.b]) expect(Number.isInteger(n) && n >= 1 && n <= 9).toBe(true);
+      expect(q.fact.c).toBe(q.fact.op === '+' ? q.fact.a + q.fact.b : q.fact.a - q.fact.b);
+      expect(q.fact.c).toBeGreaterThanOrEqual(0);
+      expect(correctAnswer(q)).toBe(q.fact.c);
+      expect(q.skill).toBe(q.fact.op === '+' ? 'add20' : 'sub20');
+    }
+  });
+
+  it('half adding, half taking away', () => {
+    for (const level of YOUNG) expect(generateQuiz({ level, count: 16, seed: 8 }).filter((q) => q.fact.op === '+')).toHaveLength(8);
+  });
+
+  it('level 21 answers up to 10; level 22 adds past 10 and takes away from 6 to 9', () => {
+    for (const q of quizzes(21)) expect(q.fact.c).toBeLessThanOrEqual(10);
+    for (const q of quizzes(22)) {
+      if (q.fact.op === '+') expect(q.fact.c).toBeGreaterThanOrEqual(11);
+      else expect(q.fact.a).toBeGreaterThanOrEqual(6);
+      expect(q.fact.c).toBeLessThanOrEqual(18);
+    }
+  });
+
+  it('ask every sum in their range, never the same one twice in a quiz', () => {
+    const sums = (level: 21 | 22, op: string) =>
+      new Set(SEEDS.flatMap((seed) => generateQuiz({ level, count: 20, seed }).filter((q) => q.fact.op === op).map((q) => `${q.fact.a}${op}${q.fact.b}`)));
+    expect(sums(21, '+').size).toBe(45); // 1 + 1 … 9 + 1
+    expect(sums(21, '-').size).toBe(45); // 1 − 1 … 9 − 9
+    expect(sums(22, '+').size).toBe(36); // 2 + 9 … 9 + 9
+    expect(sums(22, '-').size).toBe(26); // 6 − 2 … 9 − 9
+    for (const seed of SEEDS.slice(0, 50)) {
+      for (const level of YOUNG) {
+        const quiz = generateQuiz({ level, count: 20, seed });
+        expect(new Set(quiz.map((q) => `${q.fact.a}${q.fact.op}${q.fact.b}`)).size).toBe(20);
+      }
+    }
   });
 });
 
@@ -188,7 +257,8 @@ describe('answers', () => {
         expect(choices).toHaveLength(4);
         expect(new Set(choices).size).toBe(4);
         expect(choices).toContain(f.c);
-        expect(choices.every((n) => n > 0)).toBe(true);
+        // Wrong options are positive (the answer itself is 0 for 5 − 5, at levels 21–22).
+        expect(choices.every((n) => n > 0 || n === f.c)).toBe(true);
       });
     }
   });

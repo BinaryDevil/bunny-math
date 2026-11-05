@@ -1,6 +1,6 @@
 # Bunny Math 🐰
 
-Cute maths practice for kids around 8: adding and taking away, or all four operations. Play it at **[bunnyland.app](https://bunnyland.app)**, the home of the Bunny games.
+Cute maths practice for kids around 4 to 9: adding and taking away, or all four operations. Play it at **[bunnyland.app](https://bunnyland.app)**, the home of the Bunny games.
 
 There are no accounts. Progress is saved on the device. The only thing that ever goes to a server is the optional carrot leaderboard, under a made-up name.
 
@@ -8,9 +8,9 @@ There are no accounts. Progress is saved on the device. The only thing that ever
 
 **Practice**
 - Two modes, picked on the first visit and switchable from the home screen:
-  - **Add & take away**, 6 levels: within 20, no carrying, carrying/borrowing, two-digit sums, three-digit sums, and three-digit sums with lots of carrying (including borrowing across a zero)
+  - **Add & take away**, 8 levels: first two for the youngest (only plain one-digit "a + b = ?" and "a − b = ?", answers up to 10, then adding past 10; no Adventure), then within 20, no carrying, carrying/borrowing, two-digit sums, three-digit sums, and three-digit sums with lots of carrying (including borrowing across a zero)
   - **All four**, 4 levels: tables of 2, 5 and 10; tables up to 5; tables up to 10; two-digit × and ÷ by one digit. Two thirds of the questions are × or ÷.
-- 5 question types: type the answer, pick the answer, missing number, compare (< = >), picture stories
+- 5 question types: type the answer, pick the answer, missing number, compare (< = >), picture stories. The youngest's two levels only ask "type the answer".
 - Missed questions come back at the end; results show stars, skills, and a sticker reward
 - Printable worksheets with an answer key (🖨️ on the home screen)
 
@@ -20,6 +20,7 @@ There are no accounts. Progress is saved on the device. The only thing that ever
 - Made by `npm run build`, together with `sitemap.xml`. Page addresses (`SLUGS` in `src/pages/worksheets.ts`) must never change, because search results link to them.
 
 **Adventure** (meet Rascal, Bunny's mischievous twin)
+- Every level except the youngest's two (with Adventure on, Home doesn't list them)
 - Cross 3 meadows of questions with 3 hearts, then beat Rascal in a showdown at the end of each one
 - Right answers win carrots: harder levels and harder sums pay more
 - New things unlock one run at a time: treats at rest stops (lucky clover, carrot cake, magnifier), then a Sunny or Tricky path, then a tougher Rascal after 3 wins

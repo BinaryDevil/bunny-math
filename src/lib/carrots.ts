@@ -6,12 +6,15 @@
  * tier + 1 carrots, so harder sums pay more and picking an easy level to farm carrots doesn't pay.
  * Bonuses are counted in "answers' worth", so they grow with the level too.
  */
-import type { LevelId } from './types';
+import type { AdventureLevelId, LevelId } from './types';
 
 export type Tier = 1 | 2 | 3 | 4 | 5 | 6;
 
 /** The tier of a level's main questions. Pairs across the two modes are a first guess. */
-export const LEVEL_TIER: Record<LevelId, Tier> = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 11: 1, 12: 2, 13: 4, 14: 5 };
+export const LEVEL_TIER: Record<AdventureLevelId, Tier> = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 11: 1, 12: 2, 13: 4, 14: 5 };
+
+/** Any level's tier. Levels 21–22 (the youngest's) have no Adventure, so no tier of their own: they count as the easiest. */
+export const tierOfLevel = (level: LevelId): Tier => (level in LEVEL_TIER ? LEVEL_TIER[level as AdventureLevelId] : 1);
 
 /** What one right answer is worth. Tricky-path "hard picks" count as half a tier up. */
 export const worth = (tier: number, hard = false) => tier + 1 + (hard ? 0.5 : 0);
@@ -30,7 +33,7 @@ export const CARROTS = {
 };
 
 /** The badge on a level card: what a right answer at that level is worth. */
-export const levelRate = (level: LevelId) => CARROTS.firstTry(worth(LEVEL_TIER[level]));
+export const levelRate = (level: LevelId) => CARROTS.firstTry(worth(tierOfLevel(level)));
 
 /* The shape of a run, kept here so the server's limit matches the game. */
 export const MEADOWS = 3;
@@ -46,7 +49,7 @@ export const MAX_RASCAL_HEARTS = 5;
  * Real runs come in well under this; anything above it was not earned by playing.
  */
 export function maxRunCarrots(level: LevelId): number {
-  const w = worth(Math.min(6, LEVEL_TIER[level] + 3), true);
+  const w = worth(Math.min(6, tierOfLevel(level) + 3), true);
   const meadowAnswers = MEADOWS * QUESTIONS_PER_MEADOW * (CARROTS.firstTry(w) + CARROTS.streak(w));
   const hits = MEADOWS * MAX_RASCAL_HEARTS * (CARROTS.showdownHit(w) + CARROTS.streak(w));
   const bonuses = MEADOWS * CARROTS.perfectMeadow(w) + CARROTS.finish(w, MAX_HEARTS);

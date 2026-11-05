@@ -14,6 +14,10 @@ export const es: Messages = {
   'mode.title': '¿Qué practicamos?',
   'mode.aria': 'Qué practicar',
 
+  'level.21.name': 'Primeras cuentas',
+  'level.21.blurb': 'Hasta 10',
+  'level.22.name': 'Más de 10',
+  'level.22.blurb': 'Hasta 18',
   'level.1.name': 'Calentamiento',
   'level.1.blurb': 'Hasta 20',
   'level.2.name': 'Grande + pequeño',

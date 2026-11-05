@@ -183,3 +183,40 @@ describe('browserLangs', () => {
     expect(browserLangs({})).toEqual([]);
   });
 });
+
+describe('levels 21–22, the youngest\'s, first in "+ −"', () => {
+  const click = (el: Element | null) => act(() => (el as HTMLElement).click());
+  const examples = () => [...root.querySelectorAll('.level .lv-eg')].map((e) => e.textContent);
+
+  it('keeps two modes, and lists the new levels first in "+ −"', () => {
+    setBrowser(['fr']);
+    mount();
+    expect(root.querySelectorAll('.mode-card')).toHaveLength(2);
+    click(root.querySelector('.mode-card.m-plus'));
+    expect(examples()).toEqual(['3 + 4', '8 + 5', '7 + 8', '34 + 5', '38 + 7', '46 + 37', '325 + 148', '503 − 167']);
+    expect(root.querySelector('.level .lv-name')!.textContent).toBe('Premiers calculs');
+  });
+
+  it('asks a plain one-digit sum with the keypad', () => {
+    localStorage.setItem(KEY, JSON.stringify({ mode: 'plus', levelFor: { plus: 22, all: 11 } }));
+    setBrowser(['en']);
+    mount();
+    click(root.querySelector('.start'));
+    const eq = root.querySelector('.equation')!;
+    expect(eq.textContent).toMatch(/^[1-9]\s*[+−]\s*[1-9]\s*=/);
+    expect(eq.lastElementChild!.className).toMatch(/slot/);
+    expect(root.querySelector('.story, .choices, .sign')).toBeNull();
+  });
+
+  it('are not in Adventure, which starts from level 1 instead, and the saved level is kept', () => {
+    localStorage.setItem(KEY, JSON.stringify({ mode: 'plus', levelFor: { plus: 21, all: 11 }, adventure: true }));
+    setBrowser(['en']);
+    mount();
+    expect(examples()).toEqual(['7 + 8', '34 + 5', '38 + 7', '46 + 37', '325 + 148', '503 − 167']);
+    expect(root.querySelector('.level[aria-checked="true"] .lv-eg')!.textContent).toBe('7 + 8');
+    click(root.querySelector('.adv-switch'));
+    expect(examples()[0]).toBe('3 + 4');
+    expect(root.querySelector('.level[aria-checked="true"] .lv-eg')!.textContent).toBe('3 + 4');
+    expect(stored()).toMatchObject({ adventure: false, levelFor: { plus: 21 } });
+  });
+});

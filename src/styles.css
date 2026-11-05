@@ -36,7 +36,7 @@
 :root:lang(ja) { --cjk: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans JP", "Noto Sans CJK JP"; }
 :root:lang(ko) { --cjk: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "Noto Sans CJK KR"; }
 /* Japanese and Korean UI text is written with spaces between words: wrap there, not inside a word. */
-:root:is(:lang(ja), :lang(ko)) :is(.tagline, .mode-title, .mode-name, .mode-blurb) { word-break: keep-all; overflow-wrap: anywhere; line-break: strict; }
+:root:is(:lang(ja), :lang(ko)) :is(.tagline, .mode-title, .mode-name, .mode-blurb, .lv-name, .adv-switch-text) { word-break: keep-all; overflow-wrap: anywhere; line-break: strict; }
 :root:lang(ja) .lv-name { line-break: strict; } /* no line starting with a small ゅ or ー */
 /* The display font is a chunky one; system CJK fonts at weight 400 look thin next to it. */
 :root:is(:lang(zh), :lang(ja), :lang(ko)) :is(.title, .mode-title, .mode-name, .start, .fb-title, .dialog h2, .cheer, .score, .panel h2, .book-title, .ws-title, .caption, .caption b, .sheet-title) {
@@ -535,6 +535,8 @@ h1, h2, p { margin: 0; }
 .level:nth-child(4) { background: var(--berry-soft); transform: rotate(-1deg); }
 .level:nth-child(5) { background: var(--peach-soft); transform: rotate(1deg); }
 .level:nth-child(6) { background: var(--mint-soft); transform: rotate(-1.5deg); }
+.level:nth-child(7) { background: var(--butter-soft); transform: rotate(1.5deg); }
+.level:nth-child(8) { background: var(--lilac-soft); transform: rotate(-1deg); }
 .level[aria-checked="true"] { box-shadow: 0 0 0 5px var(--card), 0 0 0 calc(5px + var(--line)) var(--berry); }
 .level[aria-checked="true"]::after {
   content: "✓"; position: absolute; top: -14px; right: -14px;
@@ -543,7 +545,14 @@ h1, h2, p { margin: 0; }
   background: var(--berry); color: #fff; border: var(--line) solid var(--ink);
   font-weight: 800;
 }
-.lv-name { display: block; font-weight: 800; font-size: clamp(18px, 2.8dvh, 24px); line-height: 1.15; overflow-wrap: break-word; hyphens: auto; padding-right: 14px; /* room for the ✓ badge */ }
+/* The card is a container so its name can be sized to it: --lv-size is the name's usual size, made smaller
+   when the grid's widest word (--lv-word, in em, set by Home) wouldn't fit on one line, down to 12px. */
+.level { container-type: inline-size; }
+.lv-name {
+  --lv-size: clamp(18px, 2.8dvh, 24px); --lv-pad: 14px; /* room for the ✓ badge */
+  display: block; font-weight: 800; line-height: 1.15; overflow-wrap: break-word; hyphens: auto; padding-right: var(--lv-pad);
+  font-size: max(12px, min(var(--lv-size), (100cqi - var(--lv-pad)) / var(--lv-word, 1)));
+}
 .lv-eg { display: block; white-space: nowrap; font-weight: 700; font-size: clamp(22px, 3.6dvh, 32px); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 .lv-stars { position: absolute; right: 12px; bottom: 8px; font-size: 14px; letter-spacing: -2px; }
 .length { display: flex; align-items: center; gap: 12px; justify-content: center; font-weight: 700; font-size: 20px; }
@@ -688,15 +697,28 @@ h1, h2, p { margin: 0; }
   .hero { flex-direction: column; text-align: center; flex: 1; }
   .hero .bunny { width: clamp(100px, 30dvh, 240px); }
   .home-pick { flex: 1.2; }
-  .levels.n6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .levels.n6 .level { padding: 10px 12px; margin: 6px; }
-  .levels.n6 .lv-name { font-size: clamp(16px, 2.4dvh, 21px); }
-  .levels.n6 .lv-eg { font-size: clamp(18px, 3dvh, 27px); }
+  .levels:is(.n6, .n8) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* "+ −" has 8 levels: 4 across, so they take 2 rows like 6 did, with more room beside the bunny. */
+  .levels:is(.n6, .n8) .level { padding: 10px 12px; margin: 6px; }
+  .levels:is(.n6, .n8) .lv-name { --lv-size: clamp(16px, 2.4dvh, 21px); }
+  .levels:is(.n6, .n8) .lv-eg { font-size: clamp(18px, 3dvh, 27px); }
+  /* 6 levels, 3 across: wide enough for words like "Complicadinhas". */
+  .home-pick:has(> .levels.n6) { flex: 2; }
+  /* "+ −" has 8 levels: 4 across, so they take 2 rows like 6 did, with more room beside the bunny.
+     These come after the n6/n8 rules above, which they override. */
+  .home-pick:has(> .levels.n8) { flex: 3; }
+  .levels.n8 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .levels.n8 .level { padding: 8px; margin: 5px; }
+  .levels.n8 .lv-name { --lv-size: clamp(14px, 2.2dvh, 18px); }
+  .levels.n8 .lv-eg { font-size: clamp(16px, 2.8dvh, 24px); }
   .modes { grid-template-columns: 1fr 1fr; }
 
   .res-body { flex-direction: row; overflow: hidden; align-items: stretch; gap: clamp(20px, 3vw, 40px); padding: 8px clamp(0px, 2vw, 32px) 0; }
   .res-hero { flex: 0.8; justify-content: center; }
-  .res-side { flex: 1.2; display: flex; flex-direction: column; gap: 14px; justify-content: center; min-height: 0; overflow-y: auto; padding: 4px; }
+  /* Centred with auto margins, not justify-content: center, which pushes a too-tall list out of the top (1024x640). */
+  .res-side { flex: 1.2; display: flex; flex-direction: column; gap: 14px; min-height: 0; overflow-y: auto; padding: 4px; }
+  .res-side > :first-child { margin-top: auto; }
+  .res-side > :last-child { margin-bottom: auto; }
 }
 .res-side { display: flex; flex-direction: column; gap: 14px; }
 
@@ -732,7 +754,7 @@ h1, h2, p { margin: 0; }
   .story-pic { font-size: 40px; }
   .mode-hero .bunny { display: none; }
   .modes { gap: 16px; }
-  .levels.n6 .lv-eg { font-size: 18px; }
+  .levels:is(.n6, .n8) .lv-eg { font-size: 18px; }
 }
 
 /* Narrow phones */
@@ -745,8 +767,8 @@ h1, h2, p { margin: 0; }
   .fb-actions .puffy { flex: 1; padding: 10px 12px; font-size: 18px; }
   .levels { gap: 8px; }
   .level { margin: 6px; padding: 8px 12px; }
-  .levels.n6 .level { padding: 5px 10px; margin: 5px; }
-  .levels.n6 .lv-name { font-size: 16px; }
+  .levels:is(.n6, .n8) .level { padding: 5px 10px; margin: 5px; }
+  .levels:is(.n6, .n8) .lv-name { --lv-size: 16px; }
   /* Home has six things in its top bar; keep them all on screen. */
   .topbar { gap: 5px; }
   .topbar .icon-btn { width: 44px; height: 44px; font-size: 20px; }
@@ -761,7 +783,7 @@ h1, h2, p { margin: 0; }
   .sheet-foot { flex-wrap: wrap; row-gap: 10px; }
   .sheet-foot .steps { flex-basis: 100%; order: -1; }
   .sheet-foot .puffy { flex: 1; }
-  .levels.n6 .lv-eg { font-size: 21px; }
+  .levels:is(.n6, .n8) .lv-eg { font-size: 21px; }
   .res-actions .puffy { min-width: 140px; }
   .print-bar .seg button { padding: 6px 14px; }
 }
@@ -772,10 +794,10 @@ h1, h2, p { margin: 0; }
   .hero .bunny { width: clamp(56px, 11dvh, 80px); }
   .tagline { font-size: 15px; margin-top: 2px; }
   .home-pick { gap: 10px; }
-  .levels.n6 { gap: 2px 8px; }
-  .levels.n6 .level { padding: 4px 10px; margin: 5px; }
-  .levels.n6 .lv-name { font-size: 15px; }
-  .levels.n6 .lv-eg { font-size: min(20px, 5.4vw); }
+  .levels:is(.n6, .n8) { gap: 2px 8px; }
+  .levels:is(.n6, .n8) .level { padding: 4px 10px; margin: 5px; }
+  .levels:is(.n6, .n8) .lv-name { --lv-size: 15px; }
+  .levels:is(.n6, .n8) .lv-eg { font-size: min(20px, 5.4vw); }
   .length { font-size: 17px; }
   .seg button { min-height: 44px; padding: 6px 16px; font-size: 18px; }
   .start { height: 56px; font-size: 24px; }
@@ -1064,6 +1086,9 @@ body, .puffy, .level, .q-card, .feedback, .dialog, .seg { transition: background
   .treat { flex-direction: row; text-align: left; }
   .treat-icon { font-size: 32px; }
   .adv-switch small { font-size: 13px; }
+  /* Narrow phones: "New!" sits on the top corner of the switch, over the knob, as a sticker, so it leaves "Adventure" room for one line. */
+  .adv-switch { position: relative; }
+  .adv-switch .new-tag { position: absolute; top: -3px; right: 12px; z-index: 1; }
   .code-key { font-size: 22px; }
   .meadow-map li { width: 28px; height: 28px; }
   .rascal.big .bubble { max-width: 34vw; font-size: 14px; }
